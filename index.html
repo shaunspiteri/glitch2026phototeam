@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Photo Crew Schedule</title>
+<style>
+  :root{ --bg:#2c1566; --hl:#fdf3c7; --hl-border:#e8cf4f; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html,body{ margin:0; padding:0; height:100%; overflow:hidden; background: var(--bg); font-family: Arial, sans-serif; color: #1a1130; }
+  .wrap{ max-width: 1100px; margin:0 auto; padding: 10px 10px 0; height:100vh; height:100dvh; display:flex; flex-direction:column; }
+  .topbar{ flex: 0 0 auto; background: var(--bg); padding: 10px 2px 8px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+  h1{ font-size: 17px; color:#fff; margin: 0; letter-spacing:.2px; }
+  .titleRow{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
+  .gateTitle{ color:#fff; font-size:18px; font-weight:700; margin:4px 0 12px; text-align:center; }
+  .gateList{ display:flex; flex-direction:column; gap:10px; }
+  .gatebtn{ background: rgba(255,255,255,0.10); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:10px; padding:14px 0; font-size:15px; font-weight:700; width:100%; }
+  .lockbtn{ background: rgba(255,255,255,0.12); color:#e9e3ff; border:1px solid rgba(255,255,255,0.3); border-radius:999px; padding:5px 11px; font-size:11px; font-weight:700; white-space:nowrap; }
+  .lockbtn.unlocked{ background:#3fae4a; color:#fff; border-color:#3fae4a; }
+  .savebtn{ background:#ffb400; color:#2c1566; border:none; border-radius:999px; padding:5px 12px; font-size:11px; font-weight:800; white-space:nowrap; margin-left:6px; }
+  .saveStatus{ color:#b9f5c3; font-size:11px; font-weight:700; margin: 2px 2px 6px; min-height:14px; }
+  .pinPanel{ display:flex; gap:6px; margin-bottom:8px; }
+  .pininput{ flex:1; padding:9px 10px; border-radius:8px; border:none; font-size:14px; font-weight:700; color:#1a1130; letter-spacing:2px; }
+  .pinbtn{ background:#ffb400; color:#2c1566; border:none; border-radius:8px; padding:9px 14px; font-size:12.5px; font-weight:800; white-space:nowrap; }
+  .pincancel{ background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:8px; padding:9px 12px; font-size:13px; font-weight:700; }
+  .pinError{ color:#ff8a8a; font-size:11.5px; margin: -4px 2px 8px; font-weight:700; }
+  .dayrow{ display:flex; gap:8px; margin-bottom:8px; }
+  .daybtn{ flex:1; background: rgba(255,255,255,0.10); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:10px; padding:10px 0; font-weight:700; font-size:14px; }
+  .daybtn.active{ background:#fff; color: var(--bg); }
+  .modeRow{ display:flex; gap:8px; margin-bottom:8px; }
+  .modebtn{ flex:1; background: transparent; color:#e9e3ff; border:1px solid rgba(255,255,255,0.3); border-radius:10px; padding:9px 0; font-weight:700; font-size:13px; }
+  .modebtn.active{ background:#ffb400; color:#2c1566; border-color:#ffb400; }
+  select#whoSelect{ width:100%; padding:11px 10px; border-radius:10px; border:none; font-size:15px; font-weight:700; color:#1a1130; background:#fff; margin-bottom: 2px; }
+  .hint{ color:#e9e3ff; font-size:11.5px; margin: 8px 2px 4px; line-height:1.4; opacity:.85; }
+  .filterRow{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+  .filterchip{ background: rgba(255,255,255,0.10); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:999px; padding:6px 12px; font-size:12px; font-weight:700; }
+  .filterchip.active{ background:#fff; color:var(--bg); }
+  .calRow{ display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+  .dateinput{ flex:1; padding:9px 8px; border-radius:8px; border:none; font-size:13px; font-weight:700; color:#1a1130; }
+  .calbtn{ background:#ffb400; color:#2c1566; border:none; border-radius:8px; padding:9px 12px; font-size:12.5px; font-weight:800; white-space:nowrap; }
+  .swatch{ width:12px; height:12px; border-radius:50%; display:inline-block; border:1px solid rgba(255,255,255,0.4);}
+  #content{ flex: 1 1 auto; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; padding-bottom: 14px; }
+  .gridpanel{ background: #fff; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); margin-top: 10px; }
+  table{ border-collapse: collapse; width: 100%; min-width: 780px; table-layout: fixed; }
+  colgroup col.timecol{ width: 34px; }
+  colgroup col.stagecol{ width: 92px; }
+  thead th{ position: sticky; top: 0; z-index:50; background: #241454; color:#fff; font-size: 10.5px; padding: 7px 2px; text-align:center; border-left: 3px solid #4b2e83; letter-spacing: .2px; }
+  thead th:first-child{ position: sticky; left:0; top: 0; z-index:51; border-left:none; }
+  thead th:last-child{ position: sticky; right:0; top: 0; z-index:51; }
+  tbody th{ position: sticky; left:0; z-index:40; background: #f1edff; font-size: 11px; font-weight:800; color:#3d1f8a; text-align:center; padding:0; vertical-align:top; border-bottom: 1px solid #e2dbf7; border-right: 3px solid #4b2e83; }
+  tbody th .ticklabel{ position: relative; top: -8px; display:block; }
+  tbody th:last-child{ left:auto; right:0; border-right:none; border-left: 3px solid #4b2e83; }
+  td.actblock{ border-left: 3px solid #4b2e83; border-bottom: 3px solid #4b2e83; padding: 0; vertical-align: top; }
+  .blockwrap{ position:relative; overflow:hidden; display:flex; flex-direction:column; }
+  .actname-overlay{ position:absolute; top:0; left:0; right:0; z-index:3; height:16px; font-size: 9.5px; font-weight:800; color:#2a2140; line-height:16px; text-transform:uppercase; padding: 0 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background: rgba(255,255,255,0.9); border-bottom: 1px solid rgba(0,0,0,0.06); pointer-events:none; }
+  .actname-overlay.empty{ color:#c3bce0; font-style:italic; font-weight:500; text-transform:none; background:transparent; border-bottom:none; }
+  .hlstar{ font-size:8px; font-weight:800; color:#8a6d05; }
+  .segments{ position:relative; }
+  .segment{ position: relative; padding-left: 4px; border-top: 1px solid #eee8f8; box-sizing: border-box; }
+  .bars{ position:absolute; left:0; top:0; bottom:0; display:flex; gap:2px; z-index:2; }
+  .bar{ width:3px; height:100%; }
+  .bar-green{ background:#3fae4a; }
+  .bar-red{ background:#e8264a; }
+  .tintbox{ position:absolute; left:10px; right:6px; top:2px; bottom:2px; border-radius:5px; display:flex; align-items:center; justify-content:center; pointer-events:none; border: 1.5px solid rgba(0,0,0,0.35); }
+  .tintbox.firstseg{ top:15px; }
+  .tintbox .pname{ font-size: 9px; font-weight:800; color:#2a2140; text-align:center; padding: 0 2px; overflow-wrap:anywhere; line-height:1.1; }
+  .tintbox.faint{ background:transparent; border:none; }
+  .segment.crossoverSpan{ z-index:5; }
+  .segment.crossoverSpan .tintbox{ box-shadow: 0 0 0 2px #fff; }
+  .tintbox.faint .pname{ color:#c9c4dc; opacity:.6; }
+  .hiddensel{ position:absolute; inset:0; width:100%; height:100%; opacity:0; border:none; cursor:pointer; z-index:4; }
+  .agendaCard{ background:#fff; border-radius:12px; margin: 8px 0; padding: 12px 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.2); display:flex; align-items:center; gap:12px; }
+  .agendaCard.hl{ background: var(--hl); border: 1px solid var(--hl-border); }
+  .agendaTime{ font-size:13px; font-weight:800; color:#5b4a8a; width:76px; flex-shrink:0; line-height:1.2;}
+  .agendaMain{ flex:1; min-width:0; }
+  .agendaStage{ font-size:15px; font-weight:800; color:#1a1130; }
+  .agendaAct{ font-size:11.5px; color:#6a5d94; text-transform:uppercase; margin-top:1px; overflow-wrap:anywhere;}
+  .agendaDot{ width:12px; height:12px; border-radius:50%; flex-shrink:0; border:1px solid rgba(0,0,0,.2); }
+  .nowline{ outline: 2px solid #ff3b30; outline-offset: -2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="titleRow">
+      <h1>Photo Crew Schedule</h1>
+      <div>
+        <button class="lockbtn" id="lockBtn">🔒 View only</button>
+        <button class="savebtn" id="saveBtn" style="display:none;">💾 Save changes</button>
+      </div>
+    </div>
+    <div class="saveStatus" id="saveStatus"></div>
+    <div id="nameGate">
+      <p class="gateTitle">Who are you?</p>
+      <div class="gateList" id="gateList"></div>
+    </div>
+    <div id="mainControls" style="display:none;">
+    <div class="pinPanel" id="pinPanel" style="display:none;">
+      <input type="password" id="pinInput" class="pininput" placeholder="Edit code" inputmode="numeric">
+      <button class="pinbtn" id="pinSubmit">Unlock</button>
+      <button class="pincancel" id="pinCancel">✕</button>
+    </div>
+    <div class="pinError" id="pinError" style="display:none;">That code isn't right — try again.</div>
+    <div class="dayrow">
+      <button class="daybtn active" data-day="day1">Day 1</button>
+      <button class="daybtn" data-day="day2">Day 2</button>
+    </div>
+    <div class="modeRow">
+      <button class="modebtn active" data-mode="mine">My schedule</button>
+      <button class="modebtn" data-mode="all">All stages</button>
+    </div>
+    <select id="whoSelect"></select>
+    <div class="filterRow" id="filterRow" style="display:none;"></div>
+    <div class="calRow" id="calRow" style="display:none;">
+      <input type="date" id="dateInput" class="dateinput">
+      <button class="calbtn" id="calBtn">+ Add to Calendar</button>
+    </div>
+    <div class="hint" id="hintText"></div>
+    </div>
+  </div>
+  <div id="content"></div>
+</div>
+
+<script>
+const RAW_BLOCKS = {
+day1: {
+Fortress: [[18,3,"AP",false],[19.5,3,"SALLY C",false],[21,4,"CHRIS STUSSY",false],[23,3,"X CLUB.",true],[0.5+24,3,"VTSS",false],[2+24,4,"KI/KI",false]],
+Vector: [[18,4,"INEFFEKT",false],[20,2,"SPRIITZZ LIVE",false],[21,3,"SEDEF ADASÏ",false],[22.5,4,"JOB JOBSE",false],[0.5+24,4,"BENWAL B2B SAM ALFRED",false],[2.5+24,3,"SPFDJ",false]],
+Orbit: [[18,3,"HEMKA",false],[19.5,2,"HUMAN SAFARI LIVE",false],[20.5,3,"ANNĒ B2B SERA J",true],[22,4,"ALARICO B2B SHDW",true],[0+24,4,"BEN KLOCK B2B RØDHÅD",false],[2+24,4,"DAX J B2B LARS HUISMANN",false]],
+Section: [[18,1,"—",false],[18.5,3,"INVERTED",false],[20,3,"WOLTERS",false],[21.5,3,"LAMMER",false],[23,3,"MISCHLUFT B2B SPFDJ",false],[0.5+24,3,"DJ IP B2B FENRICK",false],[2+24,4,"FUMI",false]],
+Cosmic: [[18,3,"STK",false],[19.5,4,"ATRIP B2B STÜM",false],[21.5,3,"HELENA LAUWAERT",false],[23,2,"KYLE STARKEY",true],[0+24,5,"SOUTHSTAR",true],[2.5+24,3,"MISCHLUFT",false]],
+Midnite: [[18,4,"—",false],[20,4,"MANTHRAX B2B SEAN RICKETT",false],[22,4,"QUEST",false],[0+24,4,"BASHKKA",false],[2+24,4,"MAC DECLOS",false]],
+Rooftop: [[18,4,"—",false],[20,4,"FRESH PRINCE",false],[22,4,"DAMZ",false],[0+24,4,"DR DUBPLATE",false],[2+24,4,"OLLIE LISHMAN",false]],
+Cave: [[18,6,"—",false],[21,3,"KYLE CORTIS",false],[22.5,4,"EFDEMIN",false],[0.5+24,3,"SOUND SYNTHESIS: SUBMERSIVE LIVE",false],[2+24,4,"TOOBRIS",false]]
+},
+day2: {
+Fortress: [[18,3,"RAZZ",false],[19.5,4,"BELLA CLAXTON",false],[21.5,3,"BAD BOOMBOX",false],[23,3,"PEGASSI",false],[0.5+24,3,"FUNK TRIBU",false],[2+24,4,"AMELIE LENS",false]],
+Vector: [[18,3,"GABRIEL MUÑOZ",false],[19.5,3,"SAIDAH",false],[21,3,"SILVA BUMPA",false],[22.5,3,"THELMA",false],[0+24,4,"SKIN ON SKIN",false],[2+24,4,"VTSS B2B ????",false]],
+Orbit: [[18,3,"MIKA HEGGEMANN",false],[19.5,2,"JOHANNES SCHUSTER B2B MIKA HEGGEMANN",false],[20.5,2,"JOHANNES SCHUSTER",false],[21.5,3,"SERAFINA",true],[23,3,"UEBERREST",false],[0.5+24,4,"ADRIÁN MILLS B2B CLOUDY",false],[2.5+24,3,"KUKO",false]],
+Section: [[18,3,"GEORG",false],[19.5,3,"HENNING BAER",false],[21,3,"IGNEZ",false],[22.5,4,"STEF MENDESIDIS LIVE",false],[0.5+24,4,"ANNĒ B2B ELLI ACULA",false],[2.5+24,3,"FUTURE .666",false]],
+Cosmic: [[18,1,"—",false],[18.5,3,"YAZMIN",false],[20,4,"BLANKA",false],[22,4,"JAMES NEWMARCH B2B VOICEDRONE",false],[0+24,4,"RENE WISE B2B AMORAL",false],[2+24,4,"DJ NOBU B2B WATA IGARASHI",false]],
+Midnite: [[18,4,"—",false],[20,4,"BUDG",false],[22,4,"QUELZA",false],[0+24,4,"GIGI FM",false],[2+24,4,"HYPERAKTIVIST",false]],
+Rooftop: [[18,8,"—",false],[22,4,"SCYTHE",false],[0+24,4,"ENTASIA",false],[2+24,4,"LISA KORVER",false]],
+Cave: [[18,6,"—",false],[21,3,"GVZ",false],[22.5,4,"ECHOFAZE",false],[0.5+24,3,"SANNA MUN",false],[2+24,4,"FENIM0RE",false]]
+}
+};
+
+const DATA = { stages: ["Fortress","Vector","Orbit","Section","Cosmic","Midnite","Rooftop","Cave"], photographers: ["Shaun","Jordy","Elske","Dru","Daryl","Ashlea","Stevy"], blocks: {day1:{},day2:{}}, day1: [], day2: [] };
+function hourToSlot(h){ return Math.round((h-18)/0.5); }
+["day1","day2"].forEach(day=>{
+  DATA.stages.forEach(stage=>{
+    const blocks = RAW_BLOCKS[day][stage].map(b=>({start: hourToSlot(b[0]), span: b[1], act: b[2], highlight: b[3]}));
+    DATA.blocks[day][stage] = blocks;
+  });
+  const rows = [];
+  for(let i=0;i<20;i++){
+    const startH = 18 + i*0.5; const endH = startH + 0.5;
+    const fmt = h=>{ const hh=Math.floor(h)%24; const mm=(h%1===0)?'00':'30'; return String(hh).padStart(2,'0')+':'+mm; };
+    const entry = {assign:{}, slot: fmt(startH)+'-'+fmt(endH)};
+    DATA.stages.forEach(stage=>{
+      const b = DATA.blocks[day][stage].find(b=>i>=b.start && i<b.start+b.span);
+      entry.assign[stage] = { photographer: null, act: b?b.act:"—", highlight: b?b.highlight:false, important:false, veryImportant:false };
+    });
+    rows.push(entry);
+  }
+  DATA[day] = rows;
+});
+
+const CROSSOVER_PAIRS = [ { stage: "Fortress", actA: "VTSS", actB: "KI/KI" }, { stage: "Cosmic", actA: "KYLE STARKEY", actB: "SOUTHSTAR" } ];
+const colorsSolid = { "Shaun":"#1a1a1a","Jordy":"#00B0F0","Elske":"#4CAF50","Dru":"#6D4C41","Daryl":"#FF0040","Ashlea":"#F4A6FF","Stevy":"#FF8C00" };
+const colorsTint = { "Shaun":"rgba(26,26,26,0.65)","Jordy":"rgba(0,176,240,0.45)","Elske":"rgba(76,175,80,0.45)","Dru":"rgba(109,76,65,0.55)","Daryl":"rgba(255,0,64,0.45)","Ashlea":"rgba(244,166,255,0.55)","Stevy":"rgba(255,140,0,0.45)" };
+const lightTextPhotographers = new Set(["Shaun","Dru"]);
+function textColorFor(p){ return lightTextPhotographers.has(p) ? "#ffffff" : "#1a1130"; }
+
+let state = { day:"day1", mode:"mine", who: null, allFilter: "ALL" };
+let live = { day1: JSON.parse(JSON.stringify(DATA.day1)), day2: JSON.parse(JSON.stringify(DATA.day2)) };
+let eventDates = { day1: "2026-08-13", day2: "2026-08-14" };
+const EDIT_PIN = "0026";
+let isUnlocked = false;
+
+const SUPABASE_URL = 'https://pxtkeolrgpkcfwvartab.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4dGtlb2xyZ3BrY2Z3dmFydGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2MzgwNDYsImV4cCI6MjEwMDIxNDA0Nn0.Frblwfro0u6I_d0dwIyzWaxJItngXsySjtNGAhSNsTw';
+const SB_HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' };
+
+async function saveAll(){
+  const status = document.getElementById('saveStatus');
+  status.textContent = 'Saving…';
+  try{
+    for(const day of ['day1','day2']){
+      const payload = live[day].map(row=>{ const out={}; DATA.stages.forEach(s=>{ out[s]=row.assign[s].photographer; }); return out; });
+      const res = await fetch(SUPABASE_URL + '/rest/v1/festival_crew_schedule?on_conflict=key', {
+        method: 'POST',
+        headers: { ...SB_HEADERS, 'Prefer': 'resolution=merge-duplicates' },
+        body: JSON.stringify({ key: 'schedule_'+day, value: JSON.stringify(payload), updated_at: new Date().toISOString() }),
+      });
+      if(!res.ok){ throw new Error('HTTP '+res.status+': '+(await res.text())); }
+    }
+    status.textContent = 'Saved ✓ ' + new Date().toLocaleTimeString();
+  }catch(e){ status.textContent = 'Save failed: ' + e.message; console.error(e); }
+}
+
+async function loadAll(){
+  for(const day of ['day1','day2']){
+    try{
+      const res = await fetch(SUPABASE_URL + '/rest/v1/festival_crew_schedule?key=eq.schedule_'+day+'&select=value', { headers: SB_HEADERS });
+      const rows = await res.json();
+      if(rows && rows.length && rows[0].value){
+        const parsed = JSON.parse(rows[0].value);
+        parsed.forEach((row,i)=>{ if(live[day][i]){ DATA.stages.forEach(s=>{ live[day][i].assign[s].photographer = row[s] || null; }); } });
+      }
+    }catch(e){ console.error(e); }
+  }
+}
+
+function populateGateList(){
+  const el = document.getElementById('gateList');
+  const sorted = [...DATA.photographers].sort((a,b)=>a.localeCompare(b));
+  el.innerHTML = sorted.map(p=>`<button class="gatebtn" data-name="${p}">${p}</button>`).join('');
+  el.querySelectorAll('.gatebtn').forEach(btn=>{ btn.addEventListener('click', ()=>{ state.who = btn.getAttribute('data-name'); state.allFilter = state.who; render(); }); });
+}
+function populateWho(){
+  const sel = document.getElementById('whoSelect');
+  const sorted = [...DATA.photographers].sort((a,b)=>a.localeCompare(b));
+  sel.innerHTML = '<option value="" disabled '+(state.who?'':'selected')+'>Select your name</option>' + sorted.map(p=>`<option value="${p}">${p}</option>`).join('');
+  sel.value = state.who || ""; sel.onchange = ()=>{ state.who = sel.value; render(); };
+}
+function populateFilterRow(){
+  const el = document.getElementById('filterRow');
+  const sorted = [...DATA.photographers].sort((a,b)=>a.localeCompare(b));
+  const names = ["ALL", ...sorted];
+  el.innerHTML = names.map(n=>{ const swatch = n==="ALL"?'':`<span class="swatch" style="background:${colorsSolid[n]}"></span>`; return `<button class="filterchip ${state.allFilter===n?'active':''}" data-filter="${n}">${swatch}${n==="ALL"?"Everyone":n}</button>`; }).join('');
+  el.querySelectorAll('.filterchip').forEach(btn=>{ btn.addEventListener('click', ()=>{ state.allFilter = btn.getAttribute('data-filter'); render(); }); });
+}
+function currentSlotIndex(){ const now=new Date(); let h=now.getHours()+now.getMinutes()/60; if(h<12)h+=24; const idx=Math.floor((h-18)/0.5); return (idx<0||idx>19)?-1:idx; }
+function renderMine(){
+  const el = document.getElementById('content');
+  if(!state.who){ el.innerHTML = `<div class="agendaCard" style="justify-content:center; text-align:center; opacity:.8;"><div class="agendaMain"><div class="agendaStage">Pick your name above to see your schedule</div></div></div>`; return; }
+  const rows = live[state.day]; const nowIdx = currentSlotIndex(); let html='';
+  rows.forEach((row,ri)=>{
+    let entry=null, stageName=null;
+    for(const stage of DATA.stages){ if(row.assign[stage].photographer===state.who){ entry=row.assign[stage]; stageName=stage; break; } }
+    const isNow = ri===nowIdx;
+    if(entry){ html += `<div class="agendaCard ${entry.highlight?'hl':''} ${isNow?'nowline':''}"><div class="agendaTime">${row.slot}</div><div class="agendaDot" style="background:${colorsSolid[state.who]}"></div><div class="agendaMain"><div class="agendaStage">${stageName}</div><div class="agendaAct">${entry.act==='—'||!entry.act?'stage closed':entry.act}${entry.highlight?' 📷 LIVE':''}</div></div></div>`; }
+  });
+  el.innerHTML = html;
+}
+function findBlock(day, stage, rowIndex){ const arr = DATA.blocks[day][stage]; for(const b of arr){ if(rowIndex>=b.start && rowIndex<b.start+b.span) return b; } return null; }
+function usedInAct(day, stage, rowIndex){ const b=findBlock(day,stage,rowIndex); const used=new Set(); if(!b) return used; for(let k=0;k<b.span;k++){ const p=live[day][b.start+k].assign[stage].photographer; if(p) used.add(p); } return used; }
+function pickReplacement(day, rowIndex, stage, excludePerson){
+  const row = live[day][rowIndex];
+  const usedThisSlot = new Set(DATA.stages.map(s=>row.assign[s].photographer).filter(Boolean));
+  const usedThisAct = usedInAct(day, stage, rowIndex);
+  const cellInfo = row.assign[stage]; const isImportant = cellInfo.important||cellInfo.veryImportant;
+  const counts = {}; DATA.photographers.forEach(p=>counts[p]=0);
+  live[day].forEach(r=>DATA.stages.forEach(s=>{ const p=r.assign[s].photographer; if(p) counts[p]=(counts[p]||0)+1; }));
+  let candidates = DATA.photographers.filter(p=> p!==excludePerson && !usedThisSlot.has(p) && !usedThisAct.has(p) && !(isImportant && p==='Daryl'));
+  candidates.sort((a,b)=>counts[a]-counts[b]);
+  return candidates.length ? candidates[0] : null;
+}
+function applyAssignment(stage, ri, val){
+  const day = state.day; const row = live[day][ri];
+  if(val){ DATA.stages.forEach(s=>{ if(s!==stage && row.assign[s].photographer===val){ row.assign[s].photographer = pickReplacement(day, ri, s, val); } }); }
+  row.assign[stage].photographer = val;
+}
+function hourLabel(ri){ const startH=18+ri*0.5; const hh=Math.floor(startH)%24; return (ri%2===0) ? String(hh).padStart(2,'0') : '–'; }
+function renderAll(){
+  const el = document.getElementById('content'); const rows = live[state.day]; const ROWH = 40;
+  const blockStartAt = {}; DATA.stages.forEach(stage=>{ DATA.blocks[state.day][stage].forEach(b=>{ blockStartAt[`${stage}_${b.start}`]=b; }); });
+  let thead = `<th>Time</th>` + DATA.stages.map(s=>`<th>${s}</th>`).join('') + `<th>Time</th>`;
+  let tbody = ''; const skipRemaining = {};
+  for(let ri=0; ri<20; ri++){
+    let tr = '';
+    const isNowRow = ri === currentSlotIndex();
+    tr += `<th class="${isNowRow?'nowline':''}" style="height:${ROWH}px"><span class="ticklabel">${hourLabel(ri)}</span></th>`;
+    DATA.stages.forEach(stage=>{
+      if(skipRemaining[stage] > 0){ skipRemaining[stage]--; return; }
+      const b = blockStartAt[`${stage}_${ri}`];
+      const crossoverConfig = CROSSOVER_PAIRS.find(c => c.stage === stage && b && b.act === c.actA);
+      if(crossoverConfig){
+        const nextBlock = blockStartAt[`${stage}_${ri + b.span}`];
+        const mergedSpan = b.span + nextBlock.span; skipRemaining[stage] = mergedSpan - 1;
+        const totalH = mergedSpan * ROWH; const splitH = (b.span + 0.5) * ROWH;
+        function segHtml(absRow, topPx, heightPx, isFirst){
+          const cellData = rows[absRow].assign[stage];
+          const options = ['<option value="">—</option>'].concat(DATA.photographers.slice().sort((a,b)=>a.localeCompare(b)).map(p=>`<option value="${p}" ${cellData.photographer===p?'selected':''}>${p}</option>`)).join('');
+          const segBars = `${cellData.important?'<div class="bar bar-green"></div>':''}${cellData.veryImportant?'<div class="bar bar-red"></div>':''}`;
+          const showTint = cellData.photographer && (state.allFilter === "ALL" || state.allFilter === cellData.photographer);
+          const dimmed = cellData.photographer && !showTint;
+          const tintStyle = showTint ? `background:${colorsTint[cellData.photographer]};` : '';
+          const topInset = isFirst ? 15 : 2;
+          const tintHtml = (showTint||dimmed) ? `<div class="tintbox ${dimmed?'faint':''}" style="position:absolute; left:10px; right:6px; top:${topInset}px; bottom:2px; ${tintStyle}"><span class="pname" style="color:${dimmed?'':textColorFor(cellData.photographer)}">${cellData.photographer}</span></div>` : '';
+          return `<div class="segment" style="position:absolute; left:0; right:0; top:${topPx}px; height:${heightPx}px;"><div class="bars">${segBars}</div>${tintHtml}<select class="hiddensel" data-stage="${stage}" data-row="${absRow}" ${isUnlocked?'':'disabled'}>${options}</select></div>`;
+        }
+        let segsA=''; for(let k=0;k<b.span;k++){ segsA += segHtml(ri+k, k*ROWH, ROWH, k===0); }
+        const boxBH = totalH - splitH;
+        let segsB=''; for(let k=1;k<nextBlock.span;k++){ segsB += segHtml(ri+b.span+k, (k-0.5)*ROWH, ROWH, false); }
+        const crossAbsRow = ri + b.span; const crossTop = splitH - ROWH/2;
+        const crossHtml = segHtml(crossAbsRow, crossTop, ROWH, false).replace('class="segment"','class="segment crossoverSpan"');
+        tr += `<td class="actblock" rowspan="${mergedSpan}" style="height:${totalH}px"><div class="blockwrap" style="height:${totalH}px;">
+          <div style="position:absolute; z-index:1; left:0; right:0; top:0; height:${splitH}px; background:#fff; border-bottom:3px solid #4b2e83;"><div class="actname-overlay">${crossoverConfig.actA}</div>${segsA}</div>
+          <div style="position:absolute; z-index:1; left:0; right:0; top:${splitH}px; height:${boxBH}px; background:#fff;"><div class="actname-overlay">${crossoverConfig.actB}</div>${segsB}</div>
+          ${crossHtml}</div></td>`;
+        return;
+      }
+      const span = b ? b.span : 1; skipRemaining[stage] = span - 1;
+      const actEmpty = !b || b.act === '—' || !b.act;
+      const baseBg = actEmpty ? '#8a5fc9' : (b && b.highlight ? 'var(--hl)' : '#fff');
+      let segmentsHtml='';
+      for(let k=0;k<span;k++){
+        const absRow = ri+k; const cellData = rows[absRow].assign[stage];
+        const options = ['<option value="">—</option>'].concat(DATA.photographers.slice().sort((a,b)=>a.localeCompare(b)).map(p=>`<option value="${p}" ${cellData.photographer===p?'selected':''}>${p}</option>`)).join('');
+        const segBars = `${cellData.important?'<div class="bar bar-green"></div>':''}${cellData.veryImportant?'<div class="bar bar-red"></div>':''}`;
+        const showTint = cellData.photographer && (state.allFilter === "ALL" || state.allFilter === cellData.photographer);
+        const dimmed = cellData.photographer && !showTint;
+        const segClass = k===0 ? 'firstseg' : '';
+        const isNowSeg = absRow === currentSlotIndex();
+        segmentsHtml += `<div class="segment ${isNowSeg?'nowline':''}" style="height:${ROWH}px"><div class="bars">${segBars}</div>${showTint?`<div class="tintbox ${segClass}" style="background:${colorsTint[cellData.photographer]};"><span class="pname" style="color:${textColorFor(cellData.photographer)}">${cellData.photographer}</span></div>`:(dimmed?`<div class="tintbox faint ${segClass}"><span class="pname faint">${cellData.photographer}</span></div>`:'')}<select class="hiddensel" data-stage="${stage}" data-row="${absRow}" ${isUnlocked?'':'disabled'}>${options}</select></div>`;
+      }
+      const blockHeight = span*ROWH;
+      tr += `<td class="actblock" rowspan="${span}" style="height:${blockHeight}px"><div class="blockwrap" style="background:${baseBg}; height:${blockHeight}px;"><div class="actname-overlay ${actEmpty?'empty':''}">${actEmpty?'':b.act}${b&&b.highlight?' <span class="hlstar">📷 LIVE</span>':''}</div><div class="segments">${segmentsHtml}</div></div></td>`;
+    });
+    tr += `<th style="height:${ROWH}px"><span class="ticklabel">${hourLabel(ri)}</span></th>`;
+    tbody += `<tr>${tr}</tr>`;
+  }
+  const closeTick = `<th style="height:1px; background:#f1edff;"><span class="ticklabel">04</span></th>`;
+  tbody += `<tr>${closeTick}${DATA.stages.map(()=>'<td style="height:1px;padding:0;background:transparent;border:none;"></td>').join('')}${closeTick}</tr>`;
+  el.innerHTML = `<div class="gridpanel"><table><colgroup><col class="timecol">${DATA.stages.map(()=>'<col class="stagecol">').join('')}<col class="timecol"></colgroup><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table></div>`;
+  el.querySelectorAll('.hiddensel').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      if(!isUnlocked){ renderAll(); return; }
+      const stage = sel.getAttribute('data-stage'); const ri = parseInt(sel.getAttribute('data-row')); const val = sel.value || null;
+      applyAssignment(stage, ri, val); renderAll();
+    });
+  });
+}
+function pad2(n){ return n.toString().padStart(2,'0'); }
+function slotStartDateTime(dateStr, timeHHMM){ const [hh,mm]=timeHHMM.split(':').map(Number); const d=new Date(dateStr+'T00:00:00'); if(hh<12){ d.setDate(d.getDate()+1); } d.setHours(hh,mm,0,0); return d; }
+function icsDate(d){ return d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate())+'T'+pad2(d.getHours())+pad2(d.getMinutes())+'00'; }
+function buildICS(){
+  if(!state.who){ const sel=document.getElementById('whoSelect'); sel.style.outline='2px solid #ff3b30'; setTimeout(()=>{sel.style.outline='';},1500); return; }
+  const dateStr = eventDates[state.day];
+  if(!dateStr){ const di=document.getElementById('dateInput'); di.focus(); di.style.outline='2px solid #ff3b30'; setTimeout(()=>{di.style.outline='';},1500); return; }
+  const rows = live[state.day]; let events='';
+  rows.forEach(row=>{ for(const stage of DATA.stages){ const c=row.assign[stage]; if(c.photographer===state.who){
+    const [startStr,endStr]=row.slot.split('-'); const start=slotStartDateTime(dateStr,startStr); const end=slotStartDateTime(dateStr,endStr);
+    const act=(c.act==='—'||!c.act)?'':' — '+c.act;
+    events += `BEGIN:VEVENT\nUID:${state.day}-${stage}-${row.slot}-${state.who}@crewschedule\nDTSTART:${icsDate(start)}\nDTEND:${icsDate(end)}\nSUMMARY:${stage}${act}\nEND:VEVENT\n`;
+  }}});
+  const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Photo Crew Schedule//EN\nCALSCALE:GREGORIAN\n${events}END:VCALENDAR`;
+  const blob = new Blob([ics], {type:'text/calendar'}); const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=`${state.who}_${state.day}_schedule.ics`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+function setupCalendarControls(){ const dateInput=document.getElementById('dateInput'); dateInput.value=eventDates[state.day]||''; dateInput.onchange=()=>{ eventDates[state.day]=dateInput.value; }; document.getElementById('calBtn').onclick=buildICS; }
+function updateHint(){ const hint=document.getElementById('hintText'); if(state.mode==='mine'){ hint.textContent = state.who ? `Showing ${state.who}'s ${state.day==='day1'?'Day 1':'Day 2'} slots.` : ''; } else{ hint.textContent = `Green bar = important. Red bar = very important. Yellow fill = live stream.`; } }
+function setupLockButton(){
+  const btn=document.getElementById('lockBtn'); const panel=document.getElementById('pinPanel'); const input=document.getElementById('pinInput');
+  const submitBtn=document.getElementById('pinSubmit'); const cancelBtn=document.getElementById('pinCancel'); const errorMsg=document.getElementById('pinError'); const saveBtn=document.getElementById('saveBtn');
+  function paint(){ btn.textContent = isUnlocked ? '🔓 Editing on' : '🔒 View only'; btn.classList.toggle('unlocked', isUnlocked); saveBtn.style.display = isUnlocked ? 'inline-block' : 'none'; }
+  function openPanel(){ panel.style.display='flex'; errorMsg.style.display='none'; input.value=''; input.focus(); }
+  function closePanel(){ panel.style.display='none'; errorMsg.style.display='none'; }
+  function trySubmit(){ if(input.value.trim()===EDIT_PIN){ isUnlocked=true; paint(); closePanel(); render(); } else { errorMsg.style.display='block'; input.value=''; input.focus(); } }
+  btn.addEventListener('click', ()=>{ if(isUnlocked){ isUnlocked=false; paint(); closePanel(); render(); return; } if(panel.style.display==='flex'){closePanel();}else{openPanel();} });
+  submitBtn.addEventListener('click', trySubmit); cancelBtn.addEventListener('click', closePanel);
+  input.addEventListener('keydown', e=>{ if(e.key==='Enter') trySubmit(); });
+  saveBtn.addEventListener('click', saveAll);
+  paint();
+}
+function render(){
+  const gate=document.getElementById('nameGate'); const mainControls=document.getElementById('mainControls'); const content=document.getElementById('content');
+  if(!state.who){ gate.style.display='block'; mainControls.style.display='none'; content.style.display='none'; return; }
+  gate.style.display='none'; mainControls.style.display='block'; content.style.display='block';
+  document.getElementById('whoSelect').value = state.who;
+  document.getElementById('whoSelect').style.display = state.mode==='mine'?'block':'none';
+  document.getElementById('calRow').style.display = state.mode==='mine'?'flex':'none';
+  document.getElementById('filterRow').style.display = state.mode==='all'?'flex':'none';
+  if(state.mode==='all') populateFilterRow();
+  if(state.mode==='mine') setupCalendarControls();
+  updateHint();
+  if(state.mode==='mine') renderMine(); else renderAll();
+}
+document.querySelectorAll('.daybtn').forEach(btn=>{ btn.addEventListener('click', ()=>{ document.querySelectorAll('.daybtn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); state.day=btn.getAttribute('data-day'); render(); }); });
+document.querySelectorAll('.modebtn').forEach(btn=>{ btn.addEventListener('click', ()=>{ document.querySelectorAll('.modebtn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); state.mode=btn.getAttribute('data-mode'); render(); }); });
+
+populateWho(); populateGateList(); setupLockButton();
+loadAll().then(render);
+</script>
+</body></html>
