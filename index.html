@@ -4,14 +4,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Photo Crew Schedule</title>
 <style>
-  :root{ --bg:#180e38; --panel: rgba(255,255,255,0.06); --hl:#fdf3c7; --hl-border:#e8cf4f; --accent:#ffb400; }
+  :root{ --bg:#180e38; --panel: rgba(255,255,255,0.06); --hl:#f7f0d8; --hl-border:#e0d48a; --accent:#ffb400; }
   *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
   html,body{ margin:0; padding:0; height:100%; overflow:hidden; background: var(--bg); font-family: -apple-system, Arial, sans-serif; color: #1a1130; }
   .wrap{ max-width: 1100px; margin:0 auto; padding: 10px 10px 0; height:100vh; height:100dvh; display:flex; flex-direction:column; }
-  .topbar{ flex: 0 0 auto; background: rgba(255,255,255,0.05); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 10px 10px 8px; border-radius: 14px 14px 0 0; border: 1px solid rgba(255,255,255,0.08); border-bottom:none; transition: max-height .25s ease; overflow:hidden; }
-  .topbar.collapsed .collapsible{ display:none; }
-  .collapseHandle{ display:flex; justify-content:center; padding:4px 0 2px; cursor:pointer; }
-  .collapseHandle span{ width:34px; height:4px; border-radius:3px; background: rgba(255,255,255,0.25); display:block; }
+  .topbar{ flex: 0 0 auto; background: rgba(255,255,255,0.05); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 10px 10px 8px; border-radius: 14px 14px 0 0; border: 1px solid rgba(255,255,255,0.08); border-bottom:none; }
   h1{ font-size: 16px; color:#fff; margin: 0; letter-spacing:.2px; font-weight:600; }
   .titleRow{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
   .gateTitle{ color:#fff; font-size:18px; font-weight:600; margin:4px 0 12px; text-align:center; }
@@ -27,25 +24,21 @@
   .pinbtn{ background:var(--accent); color:#2c1566; border:none; border-radius:10px; padding:9px 14px; font-size:12.5px; font-weight:700; white-space:nowrap; }
   .pincancel{ background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:9px 12px; font-size:13px; font-weight:600; }
   .pinError{ color:#ff9d9d; font-size:11.5px; margin: -4px 2px 8px; font-weight:600; }
-  .dayrow{ display:flex; gap:8px; margin-bottom:8px; }
-  .daybtn{ flex:1; background: rgba(255,255,255,0.06); backdrop-filter: blur(10px); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:10px 0; font-weight:600; font-size:14px; }
-  .daybtn.active{ background:rgba(255,255,255,0.95); color: #2c1566; border-color:transparent; }
-  .modeRow{ display:flex; gap:8px; margin-bottom:8px; }
-  .modebtn{ flex:1; background: rgba(255,255,255,0.04); color:#e9e3ff; border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:9px 0; font-weight:600; font-size:13px; }
-  .modebtn.active{ background:var(--accent); color:#2c1566; border-color:transparent; }
-  select#whoSelect{ width:100%; padding:11px 10px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); font-size:15px; font-weight:600; color:#1a1130; background:rgba(255,255,255,0.95); margin-bottom: 2px; }
-  .hint{ color:#cfc3f2; font-size:11.5px; margin: 8px 2px 4px; line-height:1.4; opacity:.8; }
-  .filterRow{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
-  .filterchip{ background: rgba(255,255,255,0.06); backdrop-filter: blur(10px); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:999px; padding:6px 12px; font-size:12px; font-weight:600; }
-  .filterchip.active{ background:rgba(255,255,255,0.95); color:#2c1566; }
-  .zoomRow{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-  .zoombtn{ background: rgba(255,255,255,0.08); backdrop-filter: blur(10px); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:10px; width:36px; height:36px; font-size:18px; font-weight:700; }
+  .tabRow{ display:flex; gap:6px; margin-bottom:8px; }
+  .tabbtn{ flex:1; background: rgba(255,255,255,0.06); backdrop-filter: blur(10px); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:9px 0; font-weight:600; font-size:12.5px; }
+  .tabbtn.active{ background:rgba(255,255,255,0.95); color: #2c1566; border-color:transparent; }
+  .tabbtn.mode.active{ background:var(--accent); color:#2c1566; }
+  .tabDivider{ width:1px; background:rgba(255,255,255,0.15); margin:2px 2px; }
+  select#whoSelect, select#filterSelect{ width:100%; padding:10px 10px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); font-size:14px; font-weight:600; color:#1a1130; background:rgba(255,255,255,0.95); margin-bottom: 8px; }
+  .zoomRow{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .zoombtn{ background: rgba(255,255,255,0.08); backdrop-filter: blur(10px); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:10px; width:32px; height:32px; font-size:16px; font-weight:700; flex-shrink:0; }
   .zoombtn:active{ background: rgba(255,255,255,0.2); }
-  .zoomLabel{ color:#e9e3ff; font-size:12px; font-weight:600; min-width:40px; text-align:center; }
-  .calRow{ display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+  .zoomLabel{ color:#e9e3ff; font-size:11.5px; font-weight:600; min-width:34px; text-align:center; flex-shrink:0; }
+  .allHint{ color:#cfc3f2; font-size:10.5px; line-height:1.3; opacity:.85; flex:1; }
+  .mineHint{ color:#cfc3f2; font-size:11.5px; margin: 2px 2px 8px; line-height:1.4; opacity:.8; }
+  .calRow{ display:flex; gap:8px; margin-bottom:8px; align-items:center; flex-wrap:wrap; }
   .dateinput{ flex:1; padding:9px 8px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); font-size:13px; font-weight:600; color:#1a1130; background:rgba(255,255,255,0.95); }
   .calbtn{ background:var(--accent); color:#2c1566; border:none; border-radius:10px; padding:9px 12px; font-size:12.5px; font-weight:700; white-space:nowrap; }
-  .swatch{ width:12px; height:12px; border-radius:50%; display:inline-block; border:1px solid rgba(255,255,255,0.4);}
   #content{ flex: 1 1 auto; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; padding-bottom: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-top:none; border-radius: 0 0 14px 14px; }
   .gridpanel{ background: #fff; }
   table{ border-collapse: collapse; width: 100%; min-width: 780px; table-layout: fixed; }
@@ -82,6 +75,11 @@
   .agendaMain{ flex:1; min-width:0; }
   .agendaStage{ font-size:15px; font-weight:800; color:#1a1130; }
   .agendaAct{ font-size:11.5px; color:#6a5d94; text-transform:uppercase; margin-top:1px; overflow-wrap:anywhere;}
+  .agendaFlags{ display:flex; gap:6px; margin-top:3px; }
+  .flagTag{ font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:999px; letter-spacing:.3px; }
+  .flagTag.imp{ background:#e3f5e5; color:#237a2e; }
+  .flagTag.vimp{ background:#fbe1e6; color:#a3132b; }
+  .flagTag.live{ background:#f7f0d8; color:#8a6d05; }
   .agendaDot{ width:12px; height:12px; border-radius:50%; flex-shrink:0; border:1px solid rgba(0,0,0,.2); }
   .nowline{ outline: 2px solid #ff3b30; outline-offset: -2px; }
 </style>
@@ -101,35 +99,34 @@
       <p class="gateTitle">Who are you?</p>
       <div class="gateList" id="gateList"></div>
     </div>
-    <div id="mainControls" class="collapsible" style="display:none;">
+    <div id="mainControls" style="display:none;">
     <div class="pinPanel" id="pinPanel" style="display:none;">
       <input type="password" id="pinInput" class="pininput" placeholder="Edit code" inputmode="numeric">
       <button class="pinbtn" id="pinSubmit">Unlock</button>
       <button class="pincancel" id="pinCancel">✕</button>
     </div>
     <div class="pinError" id="pinError" style="display:none;">That code isn't right — try again.</div>
-    <div class="dayrow">
-      <button class="daybtn active" data-day="day1">Day 1</button>
-      <button class="daybtn" data-day="day2">Day 2</button>
-    </div>
-    <div class="modeRow">
-      <button class="modebtn active" data-mode="mine">My schedule</button>
-      <button class="modebtn" data-mode="all">All stages</button>
+    <div class="tabRow">
+      <button class="tabbtn day active" data-day="day1">Day 1</button>
+      <button class="tabbtn day" data-day="day2">Day 2</button>
+      <div class="tabDivider"></div>
+      <button class="tabbtn mode active" data-mode="mine">My schedule</button>
+      <button class="tabbtn mode" data-mode="all">All stages</button>
     </div>
     <select id="whoSelect"></select>
-    <div class="filterRow" id="filterRow" style="display:none;"></div>
+    <select id="filterSelect" style="display:none;"></select>
     <div class="zoomRow" id="zoomRow" style="display:none;">
       <button class="zoombtn" id="zoomOutBtn">–</button>
       <span class="zoomLabel" id="zoomLabel">100%</span>
       <button class="zoombtn" id="zoomInBtn">+</button>
+      <span class="allHint" id="allHintText"></span>
     </div>
     <div class="calRow" id="calRow" style="display:none;">
       <input type="date" id="dateInput" class="dateinput">
       <button class="calbtn" id="calBtn">+ Add to Calendar</button>
     </div>
-    <div class="hint" id="hintText"></div>
+    <div class="mineHint" id="mineHintText"></div>
     </div>
-    <div class="collapseHandle" id="collapseHandle"><span></span></div>
   </div>
   <div id="content"></div>
 </div>
@@ -260,12 +257,12 @@ function populateWho(){
   sel.innerHTML = '<option value="" disabled '+(state.who?'':'selected')+'>Select your name</option>' + sorted.map(p=>`<option value="${p}">${p}</option>`).join('');
   sel.value = state.who || ""; sel.onchange = ()=>{ state.who = sel.value; render(); };
 }
-function populateFilterRow(){
-  const el = document.getElementById('filterRow');
+function populateFilterSelect(){
+  const sel = document.getElementById('filterSelect');
   const sorted = [...DATA.photographers].sort((a,b)=>a.localeCompare(b));
-  const names = ["ALL", ...sorted];
-  el.innerHTML = names.map(n=>{ const swatch = n==="ALL"?'':`<span class="swatch" style="background:${colorsSolid[n]}"></span>`; return `<button class="filterchip ${state.allFilter===n?'active':''}" data-filter="${n}">${swatch}${n==="ALL"?"Everyone":n}</button>`; }).join('');
-  el.querySelectorAll('.filterchip').forEach(btn=>{ btn.addEventListener('click', ()=>{ state.allFilter = btn.getAttribute('data-filter'); render(); }); });
+  sel.innerHTML = '<option value="ALL">Everyone</option>' + sorted.map(p=>`<option value="${p}">${p}</option>`).join('');
+  sel.value = state.allFilter;
+  sel.onchange = ()=>{ state.allFilter = sel.value; render(); };
 }
 function applyZoom(){
   const gp = document.querySelector('.gridpanel');
@@ -286,7 +283,10 @@ function renderMine(){
     let entry=null, stageName=null;
     for(const stage of DATA.stages){ if(row.assign[stage].photographer===state.who){ entry=row.assign[stage]; stageName=stage; break; } }
     const isNow = ri===nowIdx;
-    if(entry){ html += `<div class="agendaCard ${entry.highlight?'hl':''} ${isNow?'nowline':''}"><div class="agendaTime">${row.slot}</div><div class="agendaDot" style="background:${colorsSolid[state.who]}"></div><div class="agendaMain"><div class="agendaStage">${stageName}</div><div class="agendaAct">${entry.act==='—'||!entry.act?'stage closed':entry.act}${entry.highlight?' 📷 LIVE':''}</div></div></div>`; }
+    if(entry){
+      const flags = `${entry.veryImportant?'<span class="flagTag vimp">VERY IMPORTANT</span>':''}${entry.important?'<span class="flagTag imp">IMPORTANT</span>':''}${entry.highlight?'<span class="flagTag live">LIVE</span>':''}`;
+      html += `<div class="agendaCard ${entry.highlight?'hl':''} ${isNow?'nowline':''}"><div class="agendaTime">${row.slot}</div><div class="agendaDot" style="background:${colorsSolid[state.who]}"></div><div class="agendaMain"><div class="agendaStage">${stageName}</div><div class="agendaAct">${entry.act==='—'||!entry.act?'stage closed':entry.act}</div>${flags?`<div class="agendaFlags">${flags}</div>`:''}</div></div>`;
+    }
   });
   html += '</div>';
   el.innerHTML = html;
@@ -398,24 +398,35 @@ function renderAll(){
 }
 function pad2(n){ return n.toString().padStart(2,'0'); }
 function slotStartDateTime(dateStr, timeHHMM){ const [hh,mm]=timeHHMM.split(':').map(Number); const d=new Date(dateStr+'T00:00:00'); if(hh<12){ d.setDate(d.getDate()+1); } d.setHours(hh,mm,0,0); return d; }
-function icsDate(d){ return d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate())+'T'+pad2(d.getHours())+pad2(d.getMinutes())+'00'; }
+function icsDate(d){ return d.getUTCFullYear()+pad2(d.getUTCMonth()+1)+pad2(d.getUTCDate())+'T'+pad2(d.getUTCHours())+pad2(d.getUTCMinutes())+pad2(d.getUTCSeconds())+'Z'; }
+function icsDateLocal(d){ return d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate())+'T'+pad2(d.getHours())+pad2(d.getMinutes())+'00'; }
 function buildICS(){
   if(!state.who){ const sel=document.getElementById('whoSelect'); sel.style.outline='2px solid #ff3b30'; setTimeout(()=>{sel.style.outline='';},1500); return; }
   const dateStr = eventDates[state.day];
   if(!dateStr){ const di=document.getElementById('dateInput'); di.focus(); di.style.outline='2px solid #ff3b30'; setTimeout(()=>{di.style.outline='';},1500); return; }
-  const rows = live[state.day]; let events='';
+  const rows = live[state.day]; let events=[];
+  const stamp = icsDate(new Date());
   rows.forEach(row=>{ for(const stage of DATA.stages){ const c=row.assign[stage]; if(c.photographer===state.who){
     const [startStr,endStr]=row.slot.split('-'); const start=slotStartDateTime(dateStr,startStr); const end=slotStartDateTime(dateStr,endStr);
     const act=(c.act==='—'||!c.act)?'':' — '+c.act;
-    events += `BEGIN:VEVENT\nUID:${state.day}-${stage}-${row.slot}-${state.who}@crewschedule\nDTSTART:${icsDate(start)}\nDTEND:${icsDate(end)}\nSUMMARY:${stage}${act}\nEND:VEVENT\n`;
+    events.push(['BEGIN:VEVENT',
+      'UID:'+state.day+'-'+stage+'-'+row.slot.replace(/[:\\-]/g,'')+'-'+state.who+'@crewschedule.local',
+      'DTSTAMP:'+stamp,
+      'DTSTART:'+icsDateLocal(start),
+      'DTEND:'+icsDateLocal(end),
+      'SUMMARY:'+stage+act,
+      'END:VEVENT'].join('\r\n'));
   }}});
-  const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Photo Crew Schedule//EN\nCALSCALE:GREGORIAN\n${events}END:VCALENDAR`;
-  const blob = new Blob([ics], {type:'text/calendar'}); const url = URL.createObjectURL(blob);
+  const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Photo Crew Schedule//EN','CALSCALE:GREGORIAN', events.join('\r\n'), 'END:VCALENDAR'].join('\r\n');
+  const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'}); const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href=url; a.download=`${state.who}_${state.day}_schedule.ics`;
   document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
 }
 function setupCalendarControls(){ const dateInput=document.getElementById('dateInput'); dateInput.value=eventDates[state.day]||''; dateInput.onchange=()=>{ eventDates[state.day]=dateInput.value; }; document.getElementById('calBtn').onclick=buildICS; }
-function updateHint(){ const hint=document.getElementById('hintText'); if(state.mode==='mine'){ hint.textContent = state.who ? `Showing ${state.who}'s ${state.day==='day1'?'Day 1':'Day 2'} slots.` : ''; } else{ hint.textContent = `Tap a colored bar to mark important (green) / very important (red). Tap again to clear. Yellow fill = live stream.`; } }
+function updateHint(){
+  document.getElementById('mineHintText').textContent = state.who ? `Showing ${state.who}'s ${state.day==='day1'?'Day 1':'Day 2'} slots.` : '';
+  document.getElementById('allHintText').textContent = `Green = important. Red = very important. Yellow = live stream.`;
+}
 function setupLockButton(){
   const btn=document.getElementById('lockBtn'); const panel=document.getElementById('pinPanel'); const input=document.getElementById('pinInput');
   const submitBtn=document.getElementById('pinSubmit'); const cancelBtn=document.getElementById('pinCancel'); const errorMsg=document.getElementById('pinError'); const saveBtn=document.getElementById('saveBtn');
@@ -429,10 +440,6 @@ function setupLockButton(){
   saveBtn.addEventListener('click', ()=>saveAll(true));
   paint();
 }
-function setupCollapse(){
-  const topbar = document.getElementById('topbar');
-  document.getElementById('collapseHandle').addEventListener('click', ()=>{ topbar.classList.toggle('collapsed'); });
-}
 function render(){
   const gate=document.getElementById('nameGate'); const mainControls=document.getElementById('mainControls'); const content=document.getElementById('content');
   if(!state.who){ gate.style.display='block'; mainControls.style.display='none'; content.style.display='none'; return; }
@@ -440,17 +447,18 @@ function render(){
   document.getElementById('whoSelect').value = state.who;
   document.getElementById('whoSelect').style.display = state.mode==='mine'?'block':'none';
   document.getElementById('calRow').style.display = state.mode==='mine'?'flex':'none';
-  document.getElementById('filterRow').style.display = state.mode==='all'?'flex':'none';
+  document.getElementById('mineHintText').style.display = state.mode==='mine'?'block':'none';
+  document.getElementById('filterSelect').style.display = state.mode==='all'?'block':'none';
   document.getElementById('zoomRow').style.display = state.mode==='all'?'flex':'none';
-  if(state.mode==='all') populateFilterRow();
+  if(state.mode==='all') populateFilterSelect();
   if(state.mode==='mine') setupCalendarControls();
   updateHint();
   if(state.mode==='mine') renderMine(); else renderAll();
 }
-document.querySelectorAll('.daybtn').forEach(btn=>{ btn.addEventListener('click', ()=>{ document.querySelectorAll('.daybtn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); state.day=btn.getAttribute('data-day'); render(); }); });
-document.querySelectorAll('.modebtn').forEach(btn=>{ btn.addEventListener('click', ()=>{ document.querySelectorAll('.modebtn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); state.mode=btn.getAttribute('data-mode'); render(); }); });
+document.querySelectorAll('.tabbtn.day').forEach(btn=>{ btn.addEventListener('click', ()=>{ document.querySelectorAll('.tabbtn.day').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); state.day=btn.getAttribute('data-day'); render(); }); });
+document.querySelectorAll('.tabbtn.mode').forEach(btn=>{ btn.addEventListener('click', ()=>{ document.querySelectorAll('.tabbtn.mode').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); state.mode=btn.getAttribute('data-mode'); render(); }); });
 
-populateWho(); populateGateList(); setupLockButton(); setupCollapse(); setupZoomControls();
+populateWho(); populateGateList(); setupLockButton(); setupZoomControls();
 loadAll().then(render);
 </script>
 </body></html>
