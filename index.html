@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Photo Crew Schedule</title>
 <style>
   :root{ --bg:#180e38; --panel: rgba(255,255,255,0.06); --hl:#fdf3c7; --hl-border:#e8cf4f; --accent:#ffb400; }
@@ -38,6 +38,10 @@
   .filterRow{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
   .filterchip{ background: rgba(255,255,255,0.06); backdrop-filter: blur(10px); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:999px; padding:6px 12px; font-size:12px; font-weight:600; }
   .filterchip.active{ background:rgba(255,255,255,0.95); color:#2c1566; }
+  .zoomRow{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .zoombtn{ background: rgba(255,255,255,0.08); backdrop-filter: blur(10px); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:10px; width:36px; height:36px; font-size:18px; font-weight:700; }
+  .zoombtn:active{ background: rgba(255,255,255,0.2); }
+  .zoomLabel{ color:#e9e3ff; font-size:12px; font-weight:600; min-width:40px; text-align:center; }
   .calRow{ display:flex; gap:8px; margin-bottom:8px; align-items:center; }
   .dateinput{ flex:1; padding:9px 8px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); font-size:13px; font-weight:600; color:#1a1130; background:rgba(255,255,255,0.95); }
   .calbtn{ background:var(--accent); color:#2c1566; border:none; border-radius:10px; padding:9px 12px; font-size:12.5px; font-weight:700; white-space:nowrap; }
@@ -60,8 +64,8 @@
   .hlstar{ font-size:8px; font-weight:800; color:#8a6d05; }
   .segments{ position:relative; }
   .segment{ position: relative; padding-left: 4px; border-top: 1px solid #eee8f8; box-sizing: border-box; }
-  .barZone{ position:absolute; left:0; top:0; bottom:0; width:16px; z-index:6; display:flex; gap:2px; align-items:stretch; padding:1px; cursor:pointer; }
-  .bar{ width:5px; height:100%; border-radius:2px; background: rgba(0,0,0,0.06); }
+  .barZone{ position:absolute; left:0; top:0; bottom:0; width:16px; z-index:6; display:flex; align-items:stretch; justify-content:center; padding:1px; cursor:pointer; }
+  .bar{ width:5px; height:100%; border-radius:2px; background: rgba(0,0,0,0.08); }
   .bar-green{ background:#3fae4a; }
   .bar-red{ background:#e8264a; }
   .tintbox{ position:absolute; left:18px; right:6px; top:2px; bottom:2px; border-radius:6px; display:flex; align-items:center; justify-content:center; pointer-events:none; border: 1.5px solid rgba(0,0,0,0.3); }
@@ -114,6 +118,11 @@
     </div>
     <select id="whoSelect"></select>
     <div class="filterRow" id="filterRow" style="display:none;"></div>
+    <div class="zoomRow" id="zoomRow" style="display:none;">
+      <button class="zoombtn" id="zoomOutBtn">–</button>
+      <span class="zoomLabel" id="zoomLabel">100%</span>
+      <button class="zoombtn" id="zoomInBtn">+</button>
+    </div>
     <div class="calRow" id="calRow" style="display:none;">
       <input type="date" id="dateInput" class="dateinput">
       <button class="calbtn" id="calBtn">+ Add to Calendar</button>
@@ -182,6 +191,7 @@ let eventDates = { day1: "2026-08-13", day2: "2026-08-14" };
 const EDIT_PIN = "0026";
 let isUnlocked = false;
 let saveTimer = null;
+let zoomLevel = 1;
 
 const SUPABASE_URL = 'https://pxtkeolrgpkcfwvartab.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4dGtlb2xyZ3BrY2Z3dmFydGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2MzgwNDYsImV4cCI6MjEwMDIxNDA0Nn0.Frblwfro0u6I_d0dwIyzWaxJItngXsySjtNGAhSNsTw';
@@ -257,6 +267,16 @@ function populateFilterRow(){
   el.innerHTML = names.map(n=>{ const swatch = n==="ALL"?'':`<span class="swatch" style="background:${colorsSolid[n]}"></span>`; return `<button class="filterchip ${state.allFilter===n?'active':''}" data-filter="${n}">${swatch}${n==="ALL"?"Everyone":n}</button>`; }).join('');
   el.querySelectorAll('.filterchip').forEach(btn=>{ btn.addEventListener('click', ()=>{ state.allFilter = btn.getAttribute('data-filter'); render(); }); });
 }
+function applyZoom(){
+  const gp = document.querySelector('.gridpanel');
+  if(gp) gp.style.zoom = zoomLevel;
+  const lbl = document.getElementById('zoomLabel');
+  if(lbl) lbl.textContent = Math.round(zoomLevel*100)+'%';
+}
+function setupZoomControls(){
+  document.getElementById('zoomInBtn').addEventListener('click', ()=>{ zoomLevel = Math.min(1.8, +(zoomLevel+0.1).toFixed(2)); applyZoom(); });
+  document.getElementById('zoomOutBtn').addEventListener('click', ()=>{ zoomLevel = Math.max(0.5, +(zoomLevel-0.1).toFixed(2)); applyZoom(); });
+}
 function currentSlotIndex(){ const now=new Date(); let h=now.getHours()+now.getMinutes()/60; if(h<12)h+=24; const idx=Math.floor((h-18)/0.5); return (idx<0||idx>19)?-1:idx; }
 function renderMine(){
   const el = document.getElementById('content');
@@ -295,6 +315,7 @@ function cycleImportance(stage, ri){
   else if(cell.important && !cell.veryImportant){ cell.important=false; cell.veryImportant=true; }
   else { cell.important=false; cell.veryImportant=false; }
 }
+function barClass(cellData){ return cellData.veryImportant ? 'bar-red' : (cellData.important ? 'bar-green' : ''); }
 function hourLabel(ri){ const startH=18+ri*0.5; const hh=Math.floor(startH)%24; return (ri%2===0) ? String(hh).padStart(2,'0') : '–'; }
 function renderAll(){
   const el = document.getElementById('content'); const rows = live[state.day]; const ROWH = 42;
@@ -316,7 +337,7 @@ function renderAll(){
         function segHtml(absRow, topPx, heightPx, isFirst){
           const cellData = rows[absRow].assign[stage];
           const options = ['<option value="">—</option>'].concat(DATA.photographers.slice().sort((a,b)=>a.localeCompare(b)).map(p=>`<option value="${p}" ${cellData.photographer===p?'selected':''}>${p}</option>`)).join('');
-          const segBars = `${cellData.important?'<div class="bar bar-green"></div>':'<div class="bar"></div>'}${cellData.veryImportant?'<div class="bar bar-red"></div>':''}`;
+          const segBars = `<div class="bar ${barClass(cellData)}"></div>`;
           const showTint = cellData.photographer && (state.allFilter === "ALL" || state.allFilter === cellData.photographer);
           const dimmed = cellData.photographer && !showTint;
           const tintStyle = showTint ? `background:${colorsTint[cellData.photographer]};` : '';
@@ -342,7 +363,7 @@ function renderAll(){
       for(let k=0;k<span;k++){
         const absRow = ri+k; const cellData = rows[absRow].assign[stage];
         const options = ['<option value="">—</option>'].concat(DATA.photographers.slice().sort((a,b)=>a.localeCompare(b)).map(p=>`<option value="${p}" ${cellData.photographer===p?'selected':''}>${p}</option>`)).join('');
-        const segBars = `${cellData.important?'<div class="bar bar-green"></div>':'<div class="bar"></div>'}${cellData.veryImportant?'<div class="bar bar-red"></div>':''}`;
+        const segBars = `<div class="bar ${barClass(cellData)}"></div>`;
         const showTint = cellData.photographer && (state.allFilter === "ALL" || state.allFilter === cellData.photographer);
         const dimmed = cellData.photographer && !showTint;
         const segClass = k===0 ? 'firstseg' : '';
@@ -358,6 +379,7 @@ function renderAll(){
   const closeTick = `<th style="height:1px; background:#f1edff;"><span class="ticklabel">04</span></th>`;
   tbody += `<tr>${closeTick}${DATA.stages.map(()=>'<td style="height:1px;padding:0;background:transparent;border:none;"></td>').join('')}${closeTick}</tr>`;
   el.innerHTML = `<div class="gridpanel"><table><colgroup><col class="timecol">${DATA.stages.map(()=>'<col class="stagecol">').join('')}<col class="timecol"></colgroup><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table></div>`;
+  applyZoom();
   el.querySelectorAll('.hiddensel').forEach(sel=>{
     sel.addEventListener('change', ()=>{
       if(!isUnlocked){ renderAll(); return; }
@@ -419,6 +441,7 @@ function render(){
   document.getElementById('whoSelect').style.display = state.mode==='mine'?'block':'none';
   document.getElementById('calRow').style.display = state.mode==='mine'?'flex':'none';
   document.getElementById('filterRow').style.display = state.mode==='all'?'flex':'none';
+  document.getElementById('zoomRow').style.display = state.mode==='all'?'flex':'none';
   if(state.mode==='all') populateFilterRow();
   if(state.mode==='mine') setupCalendarControls();
   updateHint();
@@ -427,7 +450,7 @@ function render(){
 document.querySelectorAll('.daybtn').forEach(btn=>{ btn.addEventListener('click', ()=>{ document.querySelectorAll('.daybtn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); state.day=btn.getAttribute('data-day'); render(); }); });
 document.querySelectorAll('.modebtn').forEach(btn=>{ btn.addEventListener('click', ()=>{ document.querySelectorAll('.modebtn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); state.mode=btn.getAttribute('data-mode'); render(); }); });
 
-populateWho(); populateGateList(); setupLockButton(); setupCollapse();
+populateWho(); populateGateList(); setupLockButton(); setupCollapse(); setupZoomControls();
 loadAll().then(render);
 </script>
 </body></html>
