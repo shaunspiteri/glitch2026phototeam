@@ -52,35 +52,32 @@
   tbody th:last-child{ left:auto; right:0; border-right:none; border-left: 3px solid #4b2e83; }
   td.actblock{ border-left: 3px solid #4b2e83; border-bottom: 3px solid #4b2e83; padding: 0; vertical-align: top; }
   .blockwrap{ position:relative; overflow:hidden; display:flex; flex-direction:column; }
-  .actname-overlay{ position:absolute; top:0; left:0; right:0; z-index:3; min-height:16px; font-size: 9px; font-weight:800; color:#2a2140; line-height:1.15; text-transform:uppercase; padding: 2px 4px; white-space:normal; word-break:break-word; overflow:hidden; background: rgba(255,255,255,0.92); border-bottom: 1px solid rgba(0,0,0,0.06); pointer-events:none; }
+  .actname-overlay{ position:absolute; top:0; left:0; right:0; z-index:3; height:16px; font-size: 9.5px; font-weight:800; color:#2a2140; line-height:16px; text-transform:uppercase; padding: 0 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background: rgba(255,255,255,0.92); border-bottom: 1px solid rgba(0,0,0,0.06); pointer-events:none; }
   .actname-overlay.empty{ color:#c3bce0; font-style:italic; font-weight:500; text-transform:none; background:transparent; border-bottom:none; }
   .hlstar{ font-size:8px; font-weight:800; color:#8a6d05; }
   .segments{ position:relative; }
   .segment{ position: relative; padding-left: 4px; border-top: 1px solid #eee8f8; box-sizing: border-box; }
-  .barZone{ position:absolute; left:0; top:0; bottom:0; width:16px; z-index:6; display:flex; align-items:stretch; justify-content:center; padding:1px; cursor:pointer; }
+  .barZone{ position:absolute; left:0; right:auto; width:16px; z-index:6; display:flex; align-items:stretch; justify-content:center; padding:1px; cursor:pointer; }
   .bar{ width:5px; height:100%; border-radius:2px; background: rgba(0,0,0,0.08); }
   .bar-green{ background:#3fae4a; }
   .bar-red{ background:#e8264a; }
   .tintbox{ position:absolute; left:18px; right:6px; top:2px; bottom:2px; border-radius:6px; display:flex; align-items:center; justify-content:center; pointer-events:none; border: 1.5px solid rgba(0,0,0,0.3); }
-  .tintbox.firstseg{ top:27px; }
+  .tintbox.firstseg{ top:15px; }
   .tintbox .pname{ font-size: 9px; font-weight:800; color:#2a2140; text-align:center; padding: 0 2px; overflow-wrap:anywhere; line-height:1.1; }
   .tintbox.faint{ background:transparent; border:none; }
   .segment.crossoverSpan{ z-index:5; }
   .segment.crossoverSpan .tintbox{ box-shadow: 0 0 0 2px #fff; }
   .tintbox.faint .pname{ color:#c9c4dc; opacity:.6; }
   .hiddensel{ position:absolute; left:16px; right:0; top:0; bottom:0; opacity:0; border:none; cursor:pointer; z-index:4; }
-  .agendaCard{ background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border-radius:14px; margin: 8px 0; padding: 12px 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.15); display:flex; align-items:center; gap:12px; }
-  .agendaCard.hl{ background: var(--hl); border: 1px solid var(--hl-border); }
+  .agendaCard{ background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border-radius:14px; margin: 8px 0; padding: 12px 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.15); display:flex; align-items:center; gap:12px; border-left: 5px solid transparent; }
+  .agendaCard.hl{ background: var(--hl); border-top: 1px solid var(--hl-border); border-right: 1px solid var(--hl-border); border-bottom: 1px solid var(--hl-border); }
   .agendaTime{ font-size:13px; font-weight:800; color:#5b4a8a; width:76px; flex-shrink:0; line-height:1.2;}
   .agendaMain{ flex:1; min-width:0; }
   .agendaStage{ font-size:15px; font-weight:800; color:#1a1130; }
   .agendaAct{ font-size:11.5px; color:#6a5d94; text-transform:uppercase; margin-top:1px; overflow-wrap:anywhere;}
   .agendaFlags{ display:flex; gap:6px; margin-top:3px; }
   .flagTag{ font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:999px; letter-spacing:.3px; }
-  .flagTag.imp{ background:#e3f5e5; color:#237a2e; }
-  .flagTag.vimp{ background:#fbe1e6; color:#a3132b; }
   .flagTag.live{ background:#f7f0d8; color:#8a6d05; }
-  .agendaDot{ width:12px; height:12px; border-radius:50%; flex-shrink:0; border:1px solid rgba(0,0,0,.2); }
   .nowline{ outline: 2px solid #ff3b30; outline-offset: -2px; }
 </style>
 </head>
@@ -284,8 +281,9 @@ function renderMine(){
     for(const stage of DATA.stages){ if(row.assign[stage].photographer===state.who){ entry=row.assign[stage]; stageName=stage; break; } }
     const isNow = ri===nowIdx;
     if(entry){
-      const flags = `${entry.veryImportant?'<span class="flagTag vimp">VERY IMPORTANT</span>':''}${entry.important?'<span class="flagTag imp">IMPORTANT</span>':''}${entry.highlight?'<span class="flagTag live">LIVE</span>':''}`;
-      html += `<div class="agendaCard ${entry.highlight?'hl':''} ${isNow?'nowline':''}"><div class="agendaTime">${row.slot}</div><div class="agendaDot" style="background:${colorsSolid[state.who]}"></div><div class="agendaMain"><div class="agendaStage">${stageName}</div><div class="agendaAct">${entry.act==='—'||!entry.act?'stage closed':entry.act}</div>${flags?`<div class="agendaFlags">${flags}</div>`:''}</div></div>`;
+      const borderColor = entry.veryImportant ? '#e8264a' : (entry.important ? '#3fae4a' : 'transparent');
+      const flags = `${entry.highlight?'<span class="flagTag live">LIVE</span>':''}`;
+      html += `<div class="agendaCard ${entry.highlight?'hl':''} ${isNow?'nowline':''}" style="border-left-color:${borderColor};"><div class="agendaTime">${row.slot}</div><div class="agendaMain"><div class="agendaStage">${stageName}</div><div class="agendaAct">${entry.act==='—'||!entry.act?'stage closed':entry.act}</div>${flags?`<div class="agendaFlags">${flags}</div>`:''}</div></div>`;
     }
   });
   html += '</div>';
@@ -318,7 +316,7 @@ function cycleImportance(stage, ri){
 function barClass(cellData){ return cellData.veryImportant ? 'bar-red' : (cellData.important ? 'bar-green' : ''); }
 function hourLabel(ri){ const startH=18+ri*0.5; const hh=Math.floor(startH)%24; return (ri%2===0) ? String(hh).padStart(2,'0') : '–'; }
 function renderAll(){
-  const el = document.getElementById('content'); const rows = live[state.day]; const ROWH = 42;
+  const el = document.getElementById('content'); const rows = live[state.day]; const ROWH = 42; const HEADER_H = 16;
   const blockStartAt = {}; DATA.stages.forEach(stage=>{ DATA.blocks[state.day][stage].forEach(b=>{ blockStartAt[`${stage}_${b.start}`]=b; }); });
   let thead = `<th>Time</th>` + DATA.stages.map(s=>`<th>${s}</th>`).join('') + `<th>Time</th>`;
   let tbody = ''; const skipRemaining = {};
@@ -337,13 +335,14 @@ function renderAll(){
         function segHtml(absRow, topPx, heightPx, isFirst){
           const cellData = rows[absRow].assign[stage];
           const options = ['<option value="">—</option>'].concat(DATA.photographers.slice().sort((a,b)=>a.localeCompare(b)).map(p=>`<option value="${p}" ${cellData.photographer===p?'selected':''}>${p}</option>`)).join('');
+          const barTop = isFirst ? HEADER_H : 0;
           const segBars = `<div class="bar ${barClass(cellData)}"></div>`;
           const showTint = cellData.photographer && (state.allFilter === "ALL" || state.allFilter === cellData.photographer);
           const dimmed = cellData.photographer && !showTint;
           const tintStyle = showTint ? `background:${colorsTint[cellData.photographer]};` : '';
-          const topInset = isFirst ? 27 : 2;
+          const topInset = isFirst ? 15 : 2;
           const tintHtml = (showTint||dimmed) ? `<div class="tintbox ${dimmed?'faint':''}" style="position:absolute; left:18px; right:6px; top:${topInset}px; bottom:2px; ${tintStyle}"><span class="pname" style="color:${dimmed?'':textColorFor(cellData.photographer)}">${cellData.photographer}</span></div>` : '';
-          return `<div class="segment" style="position:absolute; left:0; right:0; top:${topPx}px; height:${heightPx}px;"><div class="barZone" data-stage="${stage}" data-row="${absRow}">${segBars}</div>${tintHtml}<select class="hiddensel" data-stage="${stage}" data-row="${absRow}" ${isUnlocked?'':'disabled'}>${options}</select></div>`;
+          return `<div class="segment" style="position:absolute; left:0; right:0; top:${topPx}px; height:${heightPx}px;"><div class="barZone" data-stage="${stage}" data-row="${absRow}" style="top:${barTop}px; bottom:0;">${segBars}</div>${tintHtml}<select class="hiddensel" data-stage="${stage}" data-row="${absRow}" ${isUnlocked?'':'disabled'}>${options}</select></div>`;
         }
         let segsA=''; for(let k=0;k<b.span;k++){ segsA += segHtml(ri+k, k*ROWH, ROWH, k===0); }
         const boxBH = totalH - splitH;
@@ -363,12 +362,13 @@ function renderAll(){
       for(let k=0;k<span;k++){
         const absRow = ri+k; const cellData = rows[absRow].assign[stage];
         const options = ['<option value="">—</option>'].concat(DATA.photographers.slice().sort((a,b)=>a.localeCompare(b)).map(p=>`<option value="${p}" ${cellData.photographer===p?'selected':''}>${p}</option>`)).join('');
+        const barTop = k===0 ? HEADER_H : 0;
         const segBars = `<div class="bar ${barClass(cellData)}"></div>`;
         const showTint = cellData.photographer && (state.allFilter === "ALL" || state.allFilter === cellData.photographer);
         const dimmed = cellData.photographer && !showTint;
         const segClass = k===0 ? 'firstseg' : '';
         const isNowSeg = absRow === currentSlotIndex();
-        segmentsHtml += `<div class="segment ${isNowSeg?'nowline':''}" style="height:${ROWH}px"><div class="barZone" data-stage="${stage}" data-row="${absRow}">${segBars}</div>${showTint?`<div class="tintbox ${segClass}" style="background:${colorsTint[cellData.photographer]};"><span class="pname" style="color:${textColorFor(cellData.photographer)}">${cellData.photographer}</span></div>`:(dimmed?`<div class="tintbox faint ${segClass}"><span class="pname faint">${cellData.photographer}</span></div>`:'')}<select class="hiddensel" data-stage="${stage}" data-row="${absRow}" ${isUnlocked?'':'disabled'}>${options}</select></div>`;
+        segmentsHtml += `<div class="segment ${isNowSeg?'nowline':''}" style="height:${ROWH}px"><div class="barZone" data-stage="${stage}" data-row="${absRow}" style="top:${barTop}px; bottom:0;">${segBars}</div>${showTint?`<div class="tintbox ${segClass}" style="background:${colorsTint[cellData.photographer]};"><span class="pname" style="color:${textColorFor(cellData.photographer)}">${cellData.photographer}</span></div>`:(dimmed?`<div class="tintbox faint ${segClass}"><span class="pname faint">${cellData.photographer}</span></div>`:'')}<select class="hiddensel" data-stage="${stage}" data-row="${absRow}" ${isUnlocked?'':'disabled'}>${options}</select></div>`;
       }
       const blockHeight = span*ROWH;
       tr += `<td class="actblock" rowspan="${span}" style="height:${blockHeight}px"><div class="blockwrap" style="background:${baseBg}; height:${blockHeight}px;"><div class="actname-overlay ${actEmpty?'empty':''}">${actEmpty?'':b.act}${b&&b.highlight?' <span class="hlstar">📷 LIVE</span>':''}</div><div class="segments">${segmentsHtml}</div></div></td>`;
