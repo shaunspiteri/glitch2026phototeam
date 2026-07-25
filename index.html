@@ -33,9 +33,8 @@
   .filterScroll{ display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:2px; margin-bottom:8px; }
   .filterScroll::-webkit-scrollbar{ height:4px; }
   .filterchip{ flex:0 0 auto; background: rgba(255,255,255,0.05); color:#fff; border:1px solid var(--border); border-radius:999px; padding:7px 12px; font-size:12px; font-weight:600; white-space:nowrap; display:flex; align-items:center; gap:5px; }
-  .filterchip.active{ background:#fff; color:var(--bg); }
+  .filterchip.active{ background:var(--accent); color:var(--accent-text); border-color:transparent; }
   .swatch{ width:10px; height:10px; border-radius:50%; display:inline-block; border:1px solid rgba(255,255,255,0.4); flex-shrink:0; }
-  select#whoSelect{ width:100%; padding:10px 10px; border-radius:12px; border:1px solid var(--border); font-size:14px; font-weight:600; color:#1a1130; background:#fff; margin-bottom: 8px; }
   .zoomRow{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
   .zoombtn{ background: rgba(255,255,255,0.06); color:#fff; border:1px solid var(--border); border-radius:10px; width:32px; height:32px; font-size:16px; font-weight:700; flex-shrink:0; }
   .zoombtn:active{ background: rgba(255,255,255,0.15); }
@@ -43,7 +42,7 @@
   .allHint{ color:#9d94c9; font-size:10.5px; line-height:1.3; flex:1; }
   .mineHint{ color:#9d94c9; font-size:11.5px; margin: 2px 2px 8px; line-height:1.4; }
   .calRow{ display:flex; gap:8px; margin-bottom:8px; align-items:center; flex-wrap:wrap; }
-  .dateinput{ flex:1; padding:9px 8px; border-radius:10px; border:1px solid var(--border); font-size:13px; font-weight:600; color:#1a1130; background:#fff; }
+  .dateinput{ flex:1; padding:9px 8px; border-radius:10px; border:1px solid var(--border); font-size:13px; font-weight:600; color:#fff; background:rgba(255,255,255,0.06); color-scheme: dark; }
   .calbtn{ background:var(--accent); color:var(--accent-text); border:none; border-radius:10px; padding:9px 12px; font-size:12.5px; font-weight:700; white-space:nowrap; }
   #content{ flex: 1 1 auto; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; padding-bottom: 14px; background: var(--panel); border: 1px solid var(--border); border-top:none; border-radius: 0 0 14px 14px; }
   .gridpanel{ background: var(--grid-base); }
@@ -58,7 +57,7 @@
   tbody th:last-child{ left:auto; right:0; border-right:none; border-left: 3px solid #4b2e83; }
   td.actblock{ border-left: 3px solid #4b2e83; border-bottom: 3px solid #4b2e83; padding: 0; vertical-align: top; }
   .blockwrap{ position:relative; overflow:hidden; display:flex; flex-direction:column; }
-  .actname-overlay{ position:absolute; top:0; left:0; right:0; z-index:3; height:16px; font-size: 9.5px; font-weight:800; color:var(--grid-header-text); line-height:16px; text-transform:uppercase; padding: 0 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background: var(--grid-header-bg); border-bottom: 1px solid rgba(255,255,255,0.06); pointer-events:none; }
+  .actname-overlay{ position:absolute; top:0; left:0; right:0; z-index:10; height:16px; font-size: 9.5px; font-weight:800; color:var(--grid-header-text); line-height:16px; text-transform:uppercase; padding: 0 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background: var(--grid-header-bg); border-bottom: 1px solid rgba(255,255,255,0.06); pointer-events:none; }
   .actname-overlay.empty{ color:rgba(255,255,255,0.3); font-style:italic; font-weight:500; text-transform:none; background:transparent; border-bottom:none; }
   .hlstar{ font-size:8px; font-weight:800; color:var(--hl-text); }
   .segments{ position:relative; }
@@ -118,7 +117,7 @@
       <button class="tabbtn mode active" data-mode="mine">My schedule</button>
       <button class="tabbtn mode" data-mode="all">All stages</button>
     </div>
-    <select id="whoSelect"></select>
+    <div class="filterScroll" id="whoScroll" style="display:none;"></div>
     <div class="filterScroll" id="filterScroll" style="display:none;"></div>
     <div class="zoomRow" id="zoomRow" style="display:none;">
       <button class="zoombtn" id="zoomOutBtn">–</button>
@@ -256,11 +255,16 @@ function populateGateList(){
   el.innerHTML = sorted.map(p=>`<button class="gatebtn" data-name="${p}">${p}</button>`).join('');
   el.querySelectorAll('.gatebtn').forEach(btn=>{ btn.addEventListener('click', ()=>{ state.who = btn.getAttribute('data-name'); state.allFilter = state.who; render(); }); });
 }
-function populateWho(){
-  const sel = document.getElementById('whoSelect');
+function populateWhoScroll(){
+  const el = document.getElementById('whoScroll');
   const sorted = [...DATA.photographers].sort((a,b)=>a.localeCompare(b));
-  sel.innerHTML = '<option value="" disabled '+(state.who?'':'selected')+'>Select your name</option>' + sorted.map(p=>`<option value="${p}">${p}</option>`).join('');
-  sel.value = state.who || ""; sel.onchange = ()=>{ state.who = sel.value; render(); };
+  el.innerHTML = sorted.map(n=>{
+    const swatch = `<span class="swatch" style="background:${colorsSolid[n]}"></span>`;
+    return `<button class="filterchip ${state.who===n?'active':''}" data-who="${n}">${swatch}${n}</button>`;
+  }).join('');
+  el.querySelectorAll('.filterchip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ state.who = btn.getAttribute('data-who'); render(); });
+  });
 }
 function populateFilterScroll(){
   const el = document.getElementById('filterScroll');
@@ -414,7 +418,7 @@ function slotStartDateTime(dateStr, timeHHMM){ const [hh,mm]=timeHHMM.split(':')
 function icsDate(d){ return d.getUTCFullYear()+pad2(d.getUTCMonth()+1)+pad2(d.getUTCDate())+'T'+pad2(d.getUTCHours())+pad2(d.getUTCMinutes())+pad2(d.getUTCSeconds())+'Z'; }
 function icsDateLocal(d){ return d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate())+'T'+pad2(d.getHours())+pad2(d.getMinutes())+'00'; }
 function buildICS(){
-  if(!state.who){ const sel=document.getElementById('whoSelect'); sel.style.outline='2px solid #ff3b30'; setTimeout(()=>{sel.style.outline='';},1500); return; }
+  if(!state.who){ return; }
   const dateStr = eventDates[state.day];
   if(!dateStr){ const di=document.getElementById('dateInput'); di.focus(); di.style.outline='2px solid #ff3b30'; setTimeout(()=>{di.style.outline='';},1500); return; }
   const rows = live[state.day]; let events=[];
@@ -457,12 +461,12 @@ function render(){
   const gate=document.getElementById('nameGate'); const mainControls=document.getElementById('mainControls'); const content=document.getElementById('content');
   if(!state.who){ gate.style.display='block'; mainControls.style.display='none'; content.style.display='none'; return; }
   gate.style.display='none'; mainControls.style.display='block'; content.style.display='block';
-  document.getElementById('whoSelect').value = state.who;
-  document.getElementById('whoSelect').style.display = state.mode==='mine'?'block':'none';
+  document.getElementById('whoScroll').style.display = state.mode==='mine'?'flex':'none';
   document.getElementById('calRow').style.display = state.mode==='mine'?'flex':'none';
   document.getElementById('mineHintText').style.display = state.mode==='mine'?'block':'none';
   document.getElementById('filterScroll').style.display = state.mode==='all'?'flex':'none';
   document.getElementById('zoomRow').style.display = state.mode==='all'?'flex':'none';
+  if(state.mode==='mine') populateWhoScroll();
   if(state.mode==='all') populateFilterScroll();
   if(state.mode==='mine') setupCalendarControls();
   updateHint();
@@ -471,7 +475,7 @@ function render(){
 document.querySelectorAll('.tabbtn.day').forEach(btn=>{ btn.addEventListener('click', ()=>{ document.querySelectorAll('.tabbtn.day').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); state.day=btn.getAttribute('data-day'); render(); }); });
 document.querySelectorAll('.tabbtn.mode').forEach(btn=>{ btn.addEventListener('click', ()=>{ document.querySelectorAll('.tabbtn.mode').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); state.mode=btn.getAttribute('data-mode'); render(); }); });
 
-populateWho(); populateGateList(); setupLockButton(); setupZoomControls();
+populateGateList(); setupLockButton(); setupZoomControls();
 loadAll().then(render);
 </script>
 </body></html>
