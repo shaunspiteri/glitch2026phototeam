@@ -309,23 +309,19 @@ function renderMine(){
   html += '</div>';
   el.innerHTML = html;
 }
-function findBlock(day, stage, rowIndex){ const arr = DATA.blocks[day][stage]; for(const b of arr){ if(rowIndex>=b.start && rowIndex<b.start+b.span) return b; } return null; }
-function usedInAct(day, stage, rowIndex){ const b=findBlock(day,stage,rowIndex); const used=new Set(); if(!b) return used; for(let k=0;k<b.span;k++){ const p=live[day][b.start+k].assign[stage].photographer; if(p) used.add(p); } return used; }
-function pickReplacement(day, rowIndex, stage, excludePerson){
-  const row = live[day][rowIndex];
-  const usedThisSlot = new Set(DATA.stages.map(s=>row.assign[s].photographer).filter(Boolean));
-  const usedThisAct = usedInAct(day, stage, rowIndex);
-  const cellInfo = row.assign[stage]; const isImportant = cellInfo.important||cellInfo.veryImportant;
-  const counts = {}; DATA.photographers.forEach(p=>counts[p]=0);
-  live[day].forEach(r=>DATA.stages.forEach(s=>{ const p=r.assign[s].photographer; if(p) counts[p]=(counts[p]||0)+1; }));
-  let candidates = DATA.photographers.filter(p=> p!==excludePerson && !usedThisSlot.has(p) && !usedThisAct.has(p) && !(isImportant && p==='Daryl'));
-  candidates.sort((a,b)=>counts[a]-counts[b]);
-  return candidates.length ? candidates[0] : null;
-}
 function applyAssignment(stage, ri, val){
   const day = state.day; const row = live[day][ri];
-  if(val){ DATA.stages.forEach(s=>{ if(s!==stage && row.assign[s].photographer===val){ row.assign[s].photographer = pickReplacement(day, ri, s, val); } }); }
+  if(val){
+    let conflictStage = null;
+    DATA.stages.forEach(s=>{ if(s!==stage && row.assign[s].photographer===val){ conflictStage = s; } });
+    if(conflictStage){
+      const ok = confirm(`${val} is already assigned to ${conflictStage} at this time.\n\nMove them here instead? "${conflictStage}" will be left blank.`);
+      if(!ok) return false;
+      row.assign[conflictStage].photographer = null;
+    }
+  }
   row.assign[stage].photographer = val;
+  return true;
 }
 function cycleImportance(stage, ri){
   const cell = live[state.day][ri].assign[stage];
@@ -415,7 +411,9 @@ function renderAll(){
     sel.addEventListener('change', ()=>{
       if(!isUnlocked){ renderAll(); return; }
       const stage = sel.getAttribute('data-stage'); const ri = parseInt(sel.getAttribute('data-row')); const val = sel.value || null;
-      applyAssignment(stage, ri, val); renderAll(); scheduleAutosave();
+      const applied = applyAssignment(stage, ri, val);
+      renderAll();
+      if(applied) scheduleAutosave();
     });
   });
   el.querySelectorAll('.barZone').forEach(bz=>{
