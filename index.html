@@ -4,7 +4,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Photo Crew Schedule</title>
 <style>
-  :root{ --bg:#0c0a14; --panel:#15121f; --border: rgba(255,255,255,0.08); --hl:#2a2618; --hl-border:#4a4326; --hl-text:#d4b84a; --accent:#7c6cf0; --accent-text:#0c0a14; }
+  :root{ --bg:#0c0a14; --panel:#15121f; --border: rgba(255,255,255,0.08); --hl-bg:#3a3220; --hl-border:#6b5d2e; --hl-text:#e0c96b; --accent:#7c6cf0; --accent-text:#0c0a14;
+         --grid-base:#1a1730; --grid-closed:#2a2350; --grid-header-bg: rgba(20,16,36,0.95); --grid-header-text:#cfc3f2; --grid-th-bg:#211c35; --grid-th-text:#b9aee0; }
   *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
   html,body{ margin:0; padding:0; height:100%; overflow:hidden; background: var(--bg); font-family: -apple-system, Arial, sans-serif; color: #1a1130; }
   .wrap{ max-width: 1100px; margin:0 auto; padding: 10px 10px 0; height:100vh; height:100dvh; display:flex; flex-direction:column; }
@@ -27,10 +28,14 @@
   .pinError{ color:#ff9d9d; font-size:11.5px; margin: -4px 2px 8px; font-weight:600; }
   .tabRow{ display:flex; gap:6px; margin-bottom:8px; }
   .tabbtn{ flex:1; background: rgba(255,255,255,0.04); color:#e9e3ff; border:1px solid var(--border); border-radius:10px; padding:9px 0; font-weight:600; font-size:12.5px; }
-  .tabbtn.active{ background:#fff; color: var(--bg); border-color:transparent; }
-  .tabbtn.mode.active{ background:var(--accent); color:var(--accent-text); }
+  .tabbtn.active{ background:var(--accent); color:var(--accent-text); border-color:transparent; }
   .tabDivider{ width:1px; background:var(--border); margin:2px 2px; }
-  select#whoSelect, select#filterSelect{ width:100%; padding:10px 10px; border-radius:12px; border:1px solid var(--border); font-size:14px; font-weight:600; color:#1a1130; background:#fff; margin-bottom: 8px; }
+  .filterScroll{ display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:2px; margin-bottom:8px; }
+  .filterScroll::-webkit-scrollbar{ height:4px; }
+  .filterchip{ flex:0 0 auto; background: rgba(255,255,255,0.05); color:#fff; border:1px solid var(--border); border-radius:999px; padding:7px 12px; font-size:12px; font-weight:600; white-space:nowrap; display:flex; align-items:center; gap:5px; }
+  .filterchip.active{ background:#fff; color:var(--bg); }
+  .swatch{ width:10px; height:10px; border-radius:50%; display:inline-block; border:1px solid rgba(255,255,255,0.4); flex-shrink:0; }
+  select#whoSelect{ width:100%; padding:10px 10px; border-radius:12px; border:1px solid var(--border); font-size:14px; font-weight:600; color:#1a1130; background:#fff; margin-bottom: 8px; }
   .zoomRow{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
   .zoombtn{ background: rgba(255,255,255,0.06); color:#fff; border:1px solid var(--border); border-radius:10px; width:32px; height:32px; font-size:16px; font-weight:700; flex-shrink:0; }
   .zoombtn:active{ background: rgba(255,255,255,0.15); }
@@ -41,45 +46,45 @@
   .dateinput{ flex:1; padding:9px 8px; border-radius:10px; border:1px solid var(--border); font-size:13px; font-weight:600; color:#1a1130; background:#fff; }
   .calbtn{ background:var(--accent); color:var(--accent-text); border:none; border-radius:10px; padding:9px 12px; font-size:12.5px; font-weight:700; white-space:nowrap; }
   #content{ flex: 1 1 auto; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; padding-bottom: 14px; background: var(--panel); border: 1px solid var(--border); border-top:none; border-radius: 0 0 14px 14px; }
-  .gridpanel{ background: #fff; }
+  .gridpanel{ background: var(--grid-base); }
   table{ border-collapse: collapse; width: 100%; min-width: 780px; table-layout: fixed; }
   colgroup col.timecol{ width: 34px; }
   colgroup col.stagecol{ width: 92px; }
   thead th{ position: sticky; top: 0; z-index:50; background: #1c1830; color:#fff; font-size: 10.5px; padding: 7px 2px; text-align:center; border-left: 3px solid #4b2e83; letter-spacing: .2px; }
   thead th:first-child{ position: sticky; left:0; top: 0; z-index:51; border-left:none; }
   thead th:last-child{ position: sticky; right:0; top: 0; z-index:51; }
-  tbody th{ position: sticky; left:0; z-index:40; background: #f1edff; font-size: 11px; font-weight:800; color:#3d1f8a; text-align:center; padding:0; vertical-align:top; border-bottom: 1px solid #e2dbf7; border-right: 3px solid #4b2e83; }
+  tbody th{ position: sticky; left:0; z-index:40; background: var(--grid-th-bg); font-size: 11px; font-weight:800; color:var(--grid-th-text); text-align:center; padding:0; vertical-align:top; border-bottom: 1px solid rgba(255,255,255,0.06); border-right: 3px solid #4b2e83; }
   tbody th .ticklabel{ position: relative; top: -8px; display:block; }
   tbody th:last-child{ left:auto; right:0; border-right:none; border-left: 3px solid #4b2e83; }
   td.actblock{ border-left: 3px solid #4b2e83; border-bottom: 3px solid #4b2e83; padding: 0; vertical-align: top; }
   .blockwrap{ position:relative; overflow:hidden; display:flex; flex-direction:column; }
-  .actname-overlay{ position:absolute; top:0; left:0; right:0; z-index:3; height:16px; font-size: 9.5px; font-weight:800; color:#2a2140; line-height:16px; text-transform:uppercase; padding: 0 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background: rgba(255,255,255,0.92); border-bottom: 1px solid rgba(0,0,0,0.06); pointer-events:none; }
-  .actname-overlay.empty{ color:#c3bce0; font-style:italic; font-weight:500; text-transform:none; background:transparent; border-bottom:none; }
-  .hlstar{ font-size:8px; font-weight:800; color:#8a6d05; }
+  .actname-overlay{ position:absolute; top:0; left:0; right:0; z-index:3; height:16px; font-size: 9.5px; font-weight:800; color:var(--grid-header-text); line-height:16px; text-transform:uppercase; padding: 0 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background: var(--grid-header-bg); border-bottom: 1px solid rgba(255,255,255,0.06); pointer-events:none; }
+  .actname-overlay.empty{ color:rgba(255,255,255,0.3); font-style:italic; font-weight:500; text-transform:none; background:transparent; border-bottom:none; }
+  .hlstar{ font-size:8px; font-weight:800; color:var(--hl-text); }
   .segments{ position:relative; }
-  .segment{ position: relative; padding-left: 4px; border-top: 1px solid #eee8f8; box-sizing: border-box; }
+  .segment{ position: relative; padding-left: 4px; border-top: 1px solid rgba(255,255,255,0.06); box-sizing: border-box; }
   .barZone{ position:absolute; left:0; right:auto; width:16px; z-index:6; display:flex; align-items:stretch; justify-content:center; padding:1px; cursor:pointer; }
-  .bar{ width:5px; height:100%; border-radius:2px; background: rgba(0,0,0,0.08); }
-  .bar-green{ background:#3fae4a; }
-  .bar-red{ background:#e8264a; }
-  .tintbox{ position:absolute; left:18px; right:6px; top:2px; bottom:2px; border-radius:6px; display:flex; align-items:center; justify-content:center; pointer-events:none; border: 1.5px solid rgba(0,0,0,0.3); }
+  .bar{ width:5px; height:100%; border-radius:2px; background: rgba(255,255,255,0.12); }
+  .bar-green{ background:#4cc264; }
+  .bar-red{ background:#e8506a; }
+  .tintbox{ position:absolute; left:18px; right:6px; top:2px; bottom:2px; border-radius:6px; display:flex; align-items:center; justify-content:center; pointer-events:none; border: 1.5px solid rgba(255,255,255,0.25); }
   .tintbox.firstseg{ top:15px; }
-  .tintbox .pname{ font-size: 9px; font-weight:800; color:#2a2140; text-align:center; padding: 0 2px; overflow-wrap:anywhere; line-height:1.1; }
+  .tintbox .pname{ font-size: 9px; font-weight:800; text-align:center; padding: 0 2px; overflow-wrap:anywhere; line-height:1.1; }
   .tintbox.faint{ background:transparent; border:none; }
   .segment.crossoverSpan{ z-index:5; }
-  .segment.crossoverSpan .tintbox{ box-shadow: 0 0 0 2px #fff; }
-  .tintbox.faint .pname{ color:#c9c4dc; opacity:.6; }
+  .segment.crossoverSpan .tintbox{ box-shadow: 0 0 0 2px var(--grid-base); }
+  .tintbox.faint .pname{ color:rgba(255,255,255,0.3); }
   .hiddensel{ position:absolute; left:16px; right:0; top:0; bottom:0; opacity:0; border:none; cursor:pointer; z-index:4; }
-  .agendaCard{ background: #fff; border-radius:14px; margin: 8px 0; padding: 12px 14px; border: 1px solid rgba(0,0,0,0.06); display:flex; align-items:center; gap:12px; border-left: 9px solid transparent; }
-  .agendaCard.hl{ background: var(--hl); border-top: 1px solid var(--hl-border); border-right: 1px solid var(--hl-border); border-bottom: 1px solid var(--hl-border); }
-  .agendaCard.hl .agendaStage, .agendaCard.hl .agendaAct{ color:#e8dfa0; }
-  .agendaTime{ font-size:13px; font-weight:800; color:#5b4a8a; width:76px; flex-shrink:0; line-height:1.2;}
+  .agendaCard{ background: var(--panel); border-radius:14px; margin: 8px 0; padding: 12px 14px; border: 1px solid var(--border); display:flex; align-items:center; gap:12px; border-left: 9px solid transparent; }
+  .agendaCard.hl{ background: var(--hl-bg); border-top: 1px solid var(--hl-border); border-right: 1px solid var(--hl-border); border-bottom: 1px solid var(--hl-border); }
+  .agendaCard.hl .agendaStage, .agendaCard.hl .agendaAct{ color:var(--hl-text); }
+  .agendaTime{ font-size:13px; font-weight:800; color:#a99bd6; width:76px; flex-shrink:0; line-height:1.2;}
   .agendaMain{ flex:1; min-width:0; }
-  .agendaStage{ font-size:15px; font-weight:800; color:#1a1130; }
-  .agendaAct{ font-size:11.5px; color:#6a5d94; text-transform:uppercase; margin-top:1px; overflow-wrap:anywhere;}
+  .agendaStage{ font-size:15px; font-weight:800; color:#fff; }
+  .agendaAct{ font-size:11.5px; color:#a99bd6; text-transform:uppercase; margin-top:1px; overflow-wrap:anywhere;}
   .agendaFlags{ display:flex; gap:6px; margin-top:3px; }
   .flagTag{ font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:999px; letter-spacing:.3px; }
-  .flagTag.live{ background:var(--hl); color:var(--hl-text); }
+  .flagTag.live{ background:var(--hl-bg); color:var(--hl-text); border:1px solid var(--hl-border); }
   .nowline{ outline: 2px solid #ff3b30; outline-offset: -2px; }
 </style>
 </head>
@@ -114,7 +119,7 @@
       <button class="tabbtn mode" data-mode="all">All stages</button>
     </div>
     <select id="whoSelect"></select>
-    <select id="filterSelect" style="display:none;"></select>
+    <div class="filterScroll" id="filterScroll" style="display:none;"></div>
     <div class="zoomRow" id="zoomRow" style="display:none;">
       <button class="zoombtn" id="zoomOutBtn">–</button>
       <span class="zoomLabel" id="zoomLabel">100%</span>
@@ -177,9 +182,9 @@ function hourToSlot(h){ return Math.round((h-18)/0.5); }
 });
 
 const CROSSOVER_PAIRS = [ { stage: "Fortress", actA: "VTSS", actB: "KI/KI" }, { stage: "Cosmic", actA: "KYLE STARKEY", actB: "SOUTHSTAR" } ];
-const colorsSolid = { "Shaun":"#2a2a2a","Jordy":"#4a90c2","Elske":"#5a9c68","Dru":"#6D4C41","Daryl":"#c94a5f","Ashlea":"#c99ad1","Stevy":"#c98a4a" };
-const colorsTint = { "Shaun":"rgba(42,42,42,0.65)","Jordy":"rgba(74,144,194,0.5)","Elske":"rgba(90,156,104,0.5)","Dru":"rgba(109,76,65,0.55)","Daryl":"rgba(201,74,95,0.5)","Ashlea":"rgba(201,154,209,0.55)","Stevy":"rgba(201,138,74,0.5)" };
-const lightTextPhotographers = new Set(["Shaun","Dru","Daryl"]);
+const colorsSolid = { "Shaun":"#3a3a3a","Jordy":"#5aa5d6","Elske":"#6fb87e","Dru":"#8a6553","Daryl":"#d95f74","Ashlea":"#d6aedd","Stevy":"#d99e5a" };
+const colorsTint = { "Shaun":"rgba(58,58,58,0.85)","Jordy":"rgba(90,165,214,0.75)","Elske":"rgba(111,184,126,0.75)","Dru":"rgba(138,101,83,0.8)","Daryl":"rgba(217,95,116,0.75)","Ashlea":"rgba(214,174,221,0.8)","Stevy":"rgba(217,158,90,0.75)" };
+const lightTextPhotographers = new Set(["Shaun","Dru","Daryl","Jordy","Elske","Stevy"]);
 function textColorFor(p){ return lightTextPhotographers.has(p) ? "#ffffff" : "#1a1130"; }
 
 let state = { day:"day1", mode:"mine", who: null, allFilter: "ALL" };
@@ -257,12 +262,17 @@ function populateWho(){
   sel.innerHTML = '<option value="" disabled '+(state.who?'':'selected')+'>Select your name</option>' + sorted.map(p=>`<option value="${p}">${p}</option>`).join('');
   sel.value = state.who || ""; sel.onchange = ()=>{ state.who = sel.value; render(); };
 }
-function populateFilterSelect(){
-  const sel = document.getElementById('filterSelect');
+function populateFilterScroll(){
+  const el = document.getElementById('filterScroll');
   const sorted = [...DATA.photographers].sort((a,b)=>a.localeCompare(b));
-  sel.innerHTML = '<option value="ALL">Everyone</option>' + sorted.map(p=>`<option value="${p}">${p}</option>`).join('');
-  sel.value = state.allFilter;
-  sel.onchange = ()=>{ state.allFilter = sel.value; render(); };
+  const names = ["ALL", ...sorted];
+  el.innerHTML = names.map(n=>{
+    const swatch = n==="ALL" ? '' : `<span class="swatch" style="background:${colorsSolid[n]}"></span>`;
+    return `<button class="filterchip ${state.allFilter===n?'active':''}" data-filter="${n}">${swatch}${n==="ALL"?"Everyone":n}</button>`;
+  }).join('');
+  el.querySelectorAll('.filterchip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ state.allFilter = btn.getAttribute('data-filter'); render(); });
+  });
 }
 function applyZoom(){
   const gp = document.querySelector('.gridpanel');
@@ -284,7 +294,7 @@ function renderMine(){
     for(const stage of DATA.stages){ if(row.assign[stage].photographer===state.who){ entry=row.assign[stage]; stageName=stage; break; } }
     const isNow = ri===nowIdx;
     if(entry){
-      const borderColor = entry.veryImportant ? '#e8264a' : (entry.important ? '#3fae4a' : 'transparent');
+      const borderColor = entry.veryImportant ? '#e8506a' : (entry.important ? '#4cc264' : 'transparent');
       const flags = `${entry.highlight?'<span class="flagTag live">LIVE</span>':''}`;
       html += `<div class="agendaCard ${entry.highlight?'hl':''} ${isNow?'nowline':''}" style="border-left-color:${borderColor};"><div class="agendaTime">${row.slot}</div><div class="agendaMain"><div class="agendaStage">${stageName}</div><div class="agendaAct">${entry.act==='—'||!entry.act?'stage closed':entry.act}</div>${flags?`<div class="agendaFlags">${flags}</div>`:''}</div></div>`;
     }
@@ -353,14 +363,14 @@ function renderAll(){
         const crossAbsRow = ri + b.span; const crossTop = splitH - ROWH/2;
         const crossHtml = segHtml(crossAbsRow, crossTop, ROWH, false).replace('class="segment"','class="segment crossoverSpan"');
         tr += `<td class="actblock" rowspan="${mergedSpan}" style="height:${totalH}px"><div class="blockwrap" style="height:${totalH}px;">
-          <div style="position:absolute; z-index:1; left:0; right:0; top:0; height:${splitH}px; background:#fff; border-bottom:3px solid #4b2e83;"><div class="actname-overlay">${crossoverConfig.actA}</div>${segsA}</div>
-          <div style="position:absolute; z-index:1; left:0; right:0; top:${splitH}px; height:${boxBH}px; background:#fff;"><div class="actname-overlay">${crossoverConfig.actB}</div>${segsB}</div>
+          <div style="position:absolute; z-index:1; left:0; right:0; top:0; height:${splitH}px; background:var(--grid-base); border-bottom:3px solid #4b2e83;"><div class="actname-overlay">${crossoverConfig.actA}</div>${segsA}</div>
+          <div style="position:absolute; z-index:1; left:0; right:0; top:${splitH}px; height:${boxBH}px; background:var(--grid-base);"><div class="actname-overlay">${crossoverConfig.actB}</div>${segsB}</div>
           ${crossHtml}</div></td>`;
         return;
       }
       const span = b ? b.span : 1; skipRemaining[stage] = span - 1;
       const actEmpty = !b || b.act === '—' || !b.act;
-      const baseBg = actEmpty ? '#8a5fc9' : (b && b.highlight ? 'var(--hl)' : '#fff');
+      const baseBg = actEmpty ? 'var(--grid-closed)' : (b && b.highlight ? 'var(--hl-bg)' : 'var(--grid-base)');
       let segmentsHtml='';
       for(let k=0;k<span;k++){
         const absRow = ri+k; const cellData = rows[absRow].assign[stage];
@@ -379,7 +389,7 @@ function renderAll(){
     tr += `<th style="height:${ROWH}px"><span class="ticklabel">${hourLabel(ri)}</span></th>`;
     tbody += `<tr>${tr}</tr>`;
   }
-  const closeTick = `<th style="height:1px; background:#f1edff;"><span class="ticklabel">04</span></th>`;
+  const closeTick = `<th style="height:1px; background:transparent;"><span class="ticklabel">04</span></th>`;
   tbody += `<tr>${closeTick}${DATA.stages.map(()=>'<td style="height:1px;padding:0;background:transparent;border:none;"></td>').join('')}${closeTick}</tr>`;
   el.innerHTML = `<div class="gridpanel"><table><colgroup><col class="timecol">${DATA.stages.map(()=>'<col class="stagecol">').join('')}<col class="timecol"></colgroup><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table></div>`;
   applyZoom();
@@ -451,9 +461,9 @@ function render(){
   document.getElementById('whoSelect').style.display = state.mode==='mine'?'block':'none';
   document.getElementById('calRow').style.display = state.mode==='mine'?'flex':'none';
   document.getElementById('mineHintText').style.display = state.mode==='mine'?'block':'none';
-  document.getElementById('filterSelect').style.display = state.mode==='all'?'block':'none';
+  document.getElementById('filterScroll').style.display = state.mode==='all'?'flex':'none';
   document.getElementById('zoomRow').style.display = state.mode==='all'?'flex':'none';
-  if(state.mode==='all') populateFilterSelect();
+  if(state.mode==='all') populateFilterScroll();
   if(state.mode==='mine') setupCalendarControls();
   updateHint();
   if(state.mode==='mine') renderMine(); else renderAll();
