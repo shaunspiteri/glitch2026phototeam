@@ -45,7 +45,9 @@
   .dateinput{ flex:1; padding:9px 8px; border-radius:10px; border:1px solid var(--border); font-size:13px; font-weight:600; color:#fff; background:rgba(255,255,255,0.06); color-scheme: dark; }
   .calbtn{ background:var(--accent); color:var(--accent-text); border:none; border-radius:10px; padding:9px 12px; font-size:12.5px; font-weight:700; white-space:nowrap; }
   #content{ flex: 1 1 auto; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; padding-bottom: 14px; background: var(--panel); border: 1px solid var(--border); border-top:none; border-radius: 0 0 14px 14px; }
-  .gridpanel{ background: var(--grid-base); }
+  .gridpanel{ background: var(--grid-base); position:relative; }
+  .nowLine{ position:absolute; left:0; right:0; height:2px; background:#ff3b30; z-index:45; pointer-events:none; box-shadow:0 0 4px rgba(255,59,48,0.6); }
+  .nowLine::before{ content:''; position:absolute; left:0; top:-3px; width:8px; height:8px; border-radius:50%; background:#ff3b30; }
   table{ border-collapse: collapse; width: 100%; min-width: 780px; table-layout: fixed; }
   colgroup col.timecol{ width: 34px; }
   colgroup col.stagecol{ width: 92px; }
@@ -289,6 +291,7 @@ function setupZoomControls(){
   document.getElementById('zoomOutBtn').addEventListener('click', ()=>{ zoomLevel = Math.max(0.5, +(zoomLevel-0.1).toFixed(2)); applyZoom(); });
 }
 function currentSlotIndex(){ const now=new Date(); let h=now.getHours()+now.getMinutes()/60; if(h<12)h+=24; const idx=Math.floor((h-18)/0.5); return (idx<0||idx>19)?-1:idx; }
+function currentSlotFraction(){ const now=new Date(); let h=now.getHours()+now.getMinutes()/60; if(h<12)h+=24; const f=(h-18)/0.5; return (f<0||f>20)?-1:f; }
 function renderMine(){
   const el = document.getElementById('content');
   if(!state.who){ el.innerHTML = `<div class="agendaCard" style="justify-content:center; text-align:center; opacity:.8; margin:8px;"><div class="agendaMain"><div class="agendaStage">Pick your name above to see your schedule</div></div></div>`; return; }
@@ -339,8 +342,7 @@ function renderAll(){
   let tbody = ''; const skipRemaining = {};
   for(let ri=0; ri<20; ri++){
     let tr = '';
-    const isNowRow = ri === currentSlotIndex();
-    tr += `<th class="${isNowRow?'nowline':''}" style="height:${ROWH}px"><span class="ticklabel">${hourLabel(ri)}</span></th>`;
+    tr += `<th style="height:${ROWH}px"><span class="ticklabel">${hourLabel(ri)}</span></th>`;
     DATA.stages.forEach(stage=>{
       if(skipRemaining[stage] > 0){ skipRemaining[stage]--; return; }
       const b = blockStartAt[`${stage}_${ri}`];
@@ -384,8 +386,7 @@ function renderAll(){
         const showTint = cellData.photographer && (state.allFilter === "ALL" || state.allFilter === cellData.photographer);
         const dimmed = cellData.photographer && !showTint;
         const segClass = k===0 ? 'firstseg' : '';
-        const isNowSeg = absRow === currentSlotIndex();
-        segmentsHtml += `<div class="segment ${isNowSeg?'nowline':''}" style="height:${ROWH}px"><div class="barZone" data-stage="${stage}" data-row="${absRow}" style="top:${barTop}px; bottom:0;">${segBars}</div>${showTint?`<div class="tintbox ${segClass}" style="background:${colorsTint[cellData.photographer]};"><span class="pname" style="color:${textColorFor(cellData.photographer)}">${cellData.photographer}</span></div>`:(dimmed?`<div class="tintbox faint ${segClass}"><span class="pname faint">${cellData.photographer}</span></div>`:'')}<select class="hiddensel" data-stage="${stage}" data-row="${absRow}" ${isUnlocked?'':'disabled'}>${options}</select></div>`;
+        segmentsHtml += `<div class="segment" style="height:${ROWH}px"><div class="barZone" data-stage="${stage}" data-row="${absRow}" style="top:${barTop}px; bottom:0;">${segBars}</div>${showTint?`<div class="tintbox ${segClass}" style="background:${colorsTint[cellData.photographer]};"><span class="pname" style="color:${textColorFor(cellData.photographer)}">${cellData.photographer}</span></div>`:(dimmed?`<div class="tintbox faint ${segClass}"><span class="pname faint">${cellData.photographer}</span></div>`:'')}<select class="hiddensel" data-stage="${stage}" data-row="${absRow}" ${isUnlocked?'':'disabled'}>${options}</select></div>`;
       }
       const blockHeight = span*ROWH;
       tr += `<td class="actblock" rowspan="${span}" style="height:${blockHeight}px"><div class="blockwrap" style="background:${baseBg}; height:${blockHeight}px;"><div class="actname-overlay ${actEmpty?'empty':''}">${actEmpty?'':b.act}${b&&b.highlight?' <span class="hlstar">📷 LIVE</span>':''}</div><div class="segments">${segmentsHtml}</div></div></td>`;
@@ -397,6 +398,17 @@ function renderAll(){
   tbody += `<tr>${closeTick}${DATA.stages.map(()=>'<td style="height:1px;padding:0;background:transparent;border:none;"></td>').join('')}${closeTick}</tr>`;
   el.innerHTML = `<div class="gridpanel"><table><colgroup><col class="timecol">${DATA.stages.map(()=>'<col class="stagecol">').join('')}<col class="timecol"></colgroup><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table></div>`;
   applyZoom();
+  const frac = currentSlotFraction();
+  if(frac >= 0){
+    const gp = el.querySelector('.gridpanel');
+    const theadEl = el.querySelector('thead');
+    const theadH = theadEl ? theadEl.offsetHeight : 0;
+    const lineTop = theadH + frac * ROWH;
+    const line = document.createElement('div');
+    line.className = 'nowLine';
+    line.style.top = lineTop + 'px';
+    gp.appendChild(line);
+  }
   el.querySelectorAll('.hiddensel').forEach(sel=>{
     sel.addEventListener('change', ()=>{
       if(!isUnlocked){ renderAll(); return; }
